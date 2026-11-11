@@ -59,5 +59,7 @@ public abstract class Menu implements InventoryHolder {
 
     /** Opens another menu next tick (safe inside click handlers, and friendlier to Geyser). */
     protected void go(Menu m) { Bukkit.getScheduler().runTask(plugin, m::open); }
-    protected void close() { Bukkit.getScheduler().runTask(plugin, player::closeInventory); }
+    protected void close() {
+    Bukkit.getScheduler().runTask(plugin, (Runnable) player::closeInventory);
+}
 }
