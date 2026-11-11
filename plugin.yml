@@ -1,0 +1,53 @@
+name: ModsForKnightSMP
+prefix: Mods For KnightSMP
+version: '${version}'
+main: dev.knightsmp.mods.KnightPlugin
+api-version: '26.3'
+authors: [KnightSMP]
+description: KnightSMP all-in-one plugin - KnightTP, bounties, dual economy, shops, market, combat log
+softdepend: [Geyser-Spigot, floodgate, ViaVersion, ViaBackwards]
+
+commands:
+  tpa: {description: Request teleport, usage: /tpa <player>, permission: knightsmp.tp}
+  tpaccept: {description: Accept a teleport request, usage: /tpaccept, permission: knightsmp.tp}
+  tpdeny: {description: Deny a teleport request, usage: /tpdeny, permission: knightsmp.tp}
+  home: {description: Teleport home, usage: /home, permission: knightsmp.home}
+  sethome: {description: Set your home, usage: /sethome, permission: knightsmp.home}
+  delhome: {description: Delete your home, usage: /delhome, permission: knightsmp.home}
+  back: {description: Return to previous location, usage: /back, permission: knightsmp.back}
+  spawn: {description: Teleport to spawn, usage: /spawn, permission: knightsmp.spawn}
+  setspawn: {description: Set server spawn, usage: /setspawn, permission: knightsmp.admin.setspawn}
+  rtp: {description: Random teleport, usage: /rtp, permission: knightsmp.rtp}
+  bounty: {description: Bounty leaderboard, usage: /bounty, permission: knightsmp.bounty}
+  money: {description: Economy menu, usage: "/money [player/deposit/withdraw]", permission: knightsmp.money}
+  pay: {description: Pay a player, usage: /pay <player> <iron/diamonds> <amount>, permission: knightsmp.pay}
+  shop: {description: General shop, usage: /shop, permission: knightsmp.shop}
+  shopkits: {description: Kit shop, usage: /shopkits, permission: knightsmp.kits}
+  sell: {description: Sell items to the market, usage: /sell, permission: knightsmp.sell}
+  knight: {description: KnightSMP admin command, usage: /knight <reload/give/take/setbounty/resetbounty/market/setspawn>, permission: knightsmp.admin}
+
+permissions:
+  knightsmp.tp: {default: true}
+  knightsmp.home: {default: true}
+  knightsmp.back: {default: true}
+  knightsmp.spawn: {default: true}
+  knightsmp.rtp: {default: true}
+  knightsmp.bounty: {default: true}
+  knightsmp.money: {default: true}
+  knightsmp.money.others: {default: true}
+  knightsmp.pay: {default: true}
+  knightsmp.shop: {default: true}
+  knightsmp.kits: {default: true}
+  knightsmp.sell: {default: true}
+  knightsmp.bypass.delay: {default: op}
+  knightsmp.bypass.cooldown: {default: op}
+  knightsmp.bypass.combat: {default: false}
+  knightsmp.admin:
+    default: op
+    children:
+      knightsmp.admin.reload: true
+      knightsmp.admin.give: true
+      knightsmp.admin.take: true
+      knightsmp.admin.setbounty: true
+      knightsmp.admin.market: true
+      knightsmp.admin.setspawn: true

@@ -1,0 +1,160 @@
+# Mods For KnightSMP - main configuration
+teleport:
+  cancel-on-move: true
+  cancel-on-damage: true
+  back-on-death: true
+  block-requests-to-combat-players: false
+  # delay = seconds standing still before teleport, cooldown = seconds before reuse (0 = none)
+  tpa:   {delay: 3, cooldown: 10, request-expire-seconds: 60}
+  home:  {delay: 5, cooldown: 30}
+  back:  {delay: 5, cooldown: 30}
+  spawn: {delay: 3, cooldown: 30}
+  rtp:
+    delay: 5
+    cooldown: 300
+    world: ""            # empty = the player's current world (falls back to the first world if not the Overworld)
+    min-radius: 500
+    max-radius: 5000
+    center-x: 0
+    center-z: 0
+    attempts: 12
+
+combat:
+  enabled: true
+  duration-seconds: 30
+  punish-timeouts: true  # also punish client timeouts (not server crashes/shutdowns, which fire no combat-logout)
+  logout:
+    punishment: KILL     # KILL or NONE
+    broadcast: true
+    commands: []         # console commands, %player% placeholder
+  # Commands blocked while combat-tagged (aliases of these commands are resolved too)
+  blocked-commands: [tpa, tpahere, tpaccept, home, sethome, back, spawn, rtp, warp, warps, tp, tpr, wild]
+
+bounty:
+  enabled: true
+  increase-per-kill: 5          # bounty gained by the killer for each valid PvP kill
+  max-bounty: 1000000
+  reward-currency: iron         # iron or diamonds
+  reward-multiplier: 1.0        # reward = victim bounty x this
+  # anti-abuse
+  max-repeat-kills: 1           # kills between the same two players that count within the window
+  repeat-window-seconds: 3600
+  block-same-ip: true           # no credit when both players share a (public) IP address
+  min-account-age-minutes: 10   # both players must have joined at least this long ago
+
+wanted-role:
+  enabled: true
+  display: "&5&lKnightSMP - WANTED #1"   # shown as name-tag / tab-list prefix
+  min-bounty: 1
+  announce: true
+  # Optional console commands to hook a permissions plugin (e.g. LuckPerms), %player% placeholder:
+  on-gain-commands: []   # e.g. ["lp user %player% parent add wanted"]
+  on-lose-commands: []   # e.g. ["lp user %player% parent remove wanted"]
+
+economy:
+  # Spending uses the account balance first, then (if true) physical ingots/diamonds in the inventory.
+  spend-from-inventory: true
+  # How rewards (selling, bounties) are paid: BALANCE = account, INVENTORY = physical items (overflow goes to account)
+  payout-mode: BALANCE
+  allow-withdraw: true
+  withdraw-max: 2304
+  gui-withdraw-amount: 64
+  max-transaction: 1000000
+  balance-cap: 1000000000000
+
+shop:
+  max-quantity: 64
+
+starter-kit:
+  enabled: false     # give a free kit to brand-new players on first join
+  kit: starter       # id from kits.yml
+
+messages:
+  prefix: "&5&lKnightSMP &8» &7"
+  no-permission: "&cYou do not have permission."
+  player-only: "&cThis command can only be used by players."
+  player-not-found: "&cPlayer not found."
+  invalid-amount: "&cInvalid amount."
+  invalid-currency: "&cUnknown currency. Use &firon &cor &bdiamonds&c."
+  usage: "&cUsage: &f%usage%"
+  reloaded: "&aConfiguration reloaded."
+  # teleport
+  tp-combat: "&cYou cannot teleport while in combat!"
+  tp-busy: "&cYou are already teleporting."
+  tp-cooldown: "&cYou must wait &f%seconds%s &cbefore using this again."
+  tp-countdown: "&dTeleporting in &f%seconds%s&d... don't move!"
+  tp-countdown-bar: "&dTeleporting in &f%seconds%s"
+  tp-cancel-move: "&cTeleport cancelled: you moved."
+  tp-cancel-combat: "&cTeleport cancelled: you are in combat."
+  tp-cancel-damage: "&cTeleport cancelled: you took damage."
+  tp-done: "&aTeleported!"
+  tp-failed: "&cTeleport failed."
+  tpa-self: "&cYou cannot teleport to yourself."
+  tpa-sent: "&7Teleport request sent to &d%player%&7."
+  tpa-received: "&d%player% &7wants to teleport to you. Type &f/tpaccept &7or &f/tpdeny &7(&f%seconds%s&7)."
+  tpa-accept-btn: "&a&l[ACCEPT]"
+  tpa-deny-btn: "&c&l[DENY]"
+  tpa-none: "&cYou have no pending teleport request."
+  tpa-expired: "&cThat teleport request has expired."
+  tpa-offline: "&cThe requesting player is no longer online."
+  tpa-accepted: "&a%player% will be teleported to you."
+  tpa-denied: "&7Request denied."
+  tpa-denied-sender: "&c%player% denied your teleport request."
+  tpa-requester-combat: "&c%player% is in combat and cannot teleport right now."
+  home-set: "&aHome set."
+  home-deleted: "&7Home deleted."
+  home-none: "&cYou have no home. Use &f/sethome&c."
+  home-world: "&cYour home world is not loaded."
+  spawn-set: "&aServer spawn set."
+  back-none: "&cNo previous location."
+  rtp-searching: "&7Searching for a safe location..."
+  rtp-failed: "&cCould not find a safe location. Try again."
+  # combat
+  combat-tagged: "&c&lYou are in combat! &7Do not log out for &f%seconds%s&7."
+  combat-ended: "&aYou are no longer in combat."
+  combat-ended-bar: "&aCombat ended"
+  combat-actionbar: "&c&lCOMBAT &8- &f%time%s"
+  combat-command-blocked: "&cYou cannot use that command in combat! (&f%seconds%s&c)"
+  combat-logout-broadcast: "&c%player% &7logged out during combat!"
+  # bounty
+  bounty-gain: "&7Your bounty is now &d%bounty%&7."
+  bounty-reset: "&7You died in PvP. Your bounty of &d%bounty% &7was reset."
+  bounty-claimed-broadcast: "&d%killer% &7claimed &d%victim%&7's bounty and earned %reward%&7!"
+  bounty-blocked-repeat: "&cNo bounty credit: you already killed this player recently."
+  bounty-blocked-ip: "&cNo bounty credit: same network as the victim."
+  bounty-blocked-age: "&cNo bounty credit: one of the accounts is too new."
+  bounty-set: "&7Bounty of &d%player% &7is now &d%bounty%&7."
+  wanted-gain-broadcast: "&d%player% &7is now %role%&7!"
+  # economy
+  eco-balance-other: "&d%player%&7: &f%iron% Iron &8| &b%diamonds% Diamonds"
+  pay-sent: "&7You paid &d%player% &f%amount%&7."
+  pay-received: "&d%player% &7paid you &f%amount%&7."
+  pay-self: "&cYou cannot pay yourself."
+  pay-not-enough: "&cYou do not have enough %currency%."
+  pay-cap: "&cThat would exceed the maximum balance."
+  deposit-done: "&7Deposited &f%amount%&7."
+  deposit-none: "&cYou have no %currency% to deposit (or not that many)."
+  withdraw-done: "&7Withdrew &f%amount%&7."
+  withdraw-disabled: "&cWithdrawals are disabled."
+  withdraw-not-enough: "&cYour account does not hold that much %currency%."
+  withdraw-no-space: "&cNot enough inventory space."
+  withdraw-limit: "&cYou can withdraw at most &f%max% &cat once."
+  admin-given: "&7Gave &f%amount% &7to &d%player%&7."
+  admin-taken: "&7Took &f%amount% &7from &d%player%&7."
+  admin-failed: "&cThat would make %player%'s balance negative or exceed the cap."
+  # shops
+  shop-bought: "&aBought &f%item% &afor %price%&a."
+  shop-no-space: "&cNot enough inventory space."
+  shop-no-funds: "&cYou cannot afford this (&f%price%&c)."
+  kit-bought: "&aYou received the &d%kit% &akit (%price%&a)."
+  kit-no-space: "&cNot enough inventory space for this kit."
+  kit-no-funds: "&cYou cannot afford this kit (&f%price%&c)."
+  kit-cooldown: "&cYou can buy this kit again in &f%time%&c."
+  kit-starter: "&aWelcome! You received the &d%kit% &akit."
+  # market
+  sell-done: "&aSold &f%amount%x %item% &afor %price%&a."
+  sell-none: "&cYou do not have %bundle% x %item% to sell (or the market is full)."
+  sell-soldout: "&cThe market is not buying any more %item% today."
+  market-refreshed: "&dThe market has refreshed! &7New prices and stock are live in &f/sell&7."
+  market-reloaded: "&aMarket definitions reloaded."
+  market-forced: "&aMarket refreshed."

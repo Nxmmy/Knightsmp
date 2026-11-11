@@ -1,0 +1,81 @@
+# Dynamic selling market. price = base reward per "bundle" units of the item.
+refresh-hours: 24
+announce-refresh: true
+up-chance: 0.5                  # chance an item is in HIGH demand (price UP) on refresh
+up-multiplier:   {min: 1.3, max: 2.0}
+down-multiplier: {min: 0.4, max: 0.8}
+stock:                          # how many bundles the market will buy per refresh
+  up:   {min: 64, max: 256}
+  down: {min: 16, max: 96}
+
+categories:
+  nature:
+    name: Nature
+    icon: OAK_SAPLING
+    items:
+      - {material: BAMBOO, bundle: 16, price: 3}
+      - {material: SAND, bundle: 32, price: 2}
+      - {material: DIRT, bundle: 64, price: 1}
+      - {material: OAK_LOG, bundle: 16, price: 4}
+      - {material: SPRUCE_LOG, bundle: 16, price: 4}
+      - {material: BIRCH_LOG, bundle: 16, price: 4}
+      - {material: OAK_LEAVES, bundle: 32, price: 1}
+      - {material: GRAVEL, bundle: 32, price: 2}
+      - {material: CLAY_BALL, bundle: 16, price: 3}
+      - {material: KELP, bundle: 16, price: 2}
+      - {material: SUGAR_CANE, bundle: 16, price: 3}
+      - {material: CACTUS, bundle: 16, price: 3}
+  mining:
+    name: Mining
+    icon: IRON_PICKAXE
+    items:
+      - {material: COBBLESTONE, bundle: 64, price: 2}
+      - {material: STONE, bundle: 32, price: 2}
+      - {material: POINTED_DRIPSTONE, bundle: 16, price: 3}
+      - {material: REDSTONE, bundle: 16, price: 2}
+      - {material: COAL, bundle: 16, price: 3}
+      - {material: RAW_IRON, bundle: 8, price: 3}
+      - {material: IRON_INGOT, bundle: 8, price: 4}
+      - {material: GOLD_INGOT, bundle: 8, price: 6}
+      - {material: LAPIS_LAZULI, bundle: 16, price: 4}
+      - {material: DIAMOND, bundle: 1, price: 4}
+      - {material: EMERALD, bundle: 4, price: 5}
+      - {material: QUARTZ, bundle: 16, price: 4}
+  farming:
+    name: Farming
+    icon: WHEAT
+    items:
+      - {material: WHEAT, bundle: 16, price: 2}
+      - {material: CARROT, bundle: 16, price: 2}
+      - {material: POTATO, bundle: 16, price: 2}
+      - {material: BEETROOT, bundle: 16, price: 2}
+      - {material: PUMPKIN, bundle: 8, price: 3}
+      - {material: MELON_SLICE, bundle: 32, price: 2}
+      - {material: SWEET_BERRIES, bundle: 16, price: 3}
+      - {material: COCOA_BEANS, bundle: 16, price: 3}
+      - {material: NETHER_WART, bundle: 16, price: 4}
+  mob-drops:
+    name: Mob Drops
+    icon: ROTTEN_FLESH
+    items:
+      - {material: ROTTEN_FLESH, bundle: 16, price: 2}
+      - {material: BONE, bundle: 16, price: 3}
+      - {material: STRING, bundle: 16, price: 3}
+      - {material: SPIDER_EYE, bundle: 16, price: 3}
+      - {material: GUNPOWDER, bundle: 16, price: 4}
+      - {material: ENDER_PEARL, bundle: 4, price: 5}
+      - {material: BLAZE_ROD, bundle: 4, price: 5}
+      - {material: SLIME_BALL, bundle: 8, price: 4}
+      - {material: LEATHER, bundle: 8, price: 3}
+      - {material: FEATHER, bundle: 16, price: 2}
+  misc:
+    name: Miscellaneous
+    icon: CHEST
+    items:
+      - {material: GLASS_BOTTLE, bundle: 16, price: 2}
+      - {material: PAPER, bundle: 32, price: 3}
+      - {material: SNOWBALL, bundle: 16, price: 1}
+      - {material: FLINT, bundle: 16, price: 2}
+      - {material: INK_SAC, bundle: 16, price: 3}
+      - {material: NAUTILUS_SHELL, bundle: 1, price: 6}
+      - {material: PRISMARINE_SHARD, bundle: 8, price: 4}

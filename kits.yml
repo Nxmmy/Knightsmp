@@ -1,0 +1,103 @@
+# Kits. price 0 = free. cooldown-seconds 0 = no cooldown (buy as often as you like).
+# Items: material, amount, name (optional), enchants (optional: {name: level}).
+# Items whose material does not exist on the server version (e.g. spears) are skipped with a console warning.
+kits:
+  starter:
+    name: Starter Kit
+    icon: WOODEN_SWORD
+    description: ["&7A small free kit for new players.", "&7Enable it in config.yml: starter-kit.enabled"]
+    price: 0
+    currency: iron
+    cooldown-seconds: 0
+    items:
+      - {material: WOODEN_SWORD}
+      - {material: WOODEN_PICKAXE}
+      - {material: BREAD, amount: 8}
+      - {material: TORCH, amount: 16}
+
+  beginner:
+    name: Beginner Kit
+    icon: CHAINMAIL_CHESTPLATE
+    description: ["&7Chainmail armor, stone tools", "&7and basic supplies."]
+    price: 5
+    currency: iron
+    cooldown-seconds: 0
+    items:
+      - {material: CHAINMAIL_HELMET}
+      - {material: CHAINMAIL_CHESTPLATE}
+      - {material: CHAINMAIL_LEGGINGS}
+      - {material: CHAINMAIL_BOOTS}
+      - {material: STONE_SWORD}
+      - {material: STONE_PICKAXE}
+      - {material: STONE_AXE}
+      - {material: COOKED_BEEF, amount: 16}
+      - {material: TORCH, amount: 32}
+      - {material: OAK_PLANKS, amount: 32}
+
+  intermediate:
+    name: Intermediate Kit
+    icon: IRON_CHESTPLATE
+    description: ["&7Iron armor, iron tools", "&7and combat supplies."]
+    price: 32
+    currency: iron
+    cooldown-seconds: 0
+    items:
+      - {material: IRON_HELMET}
+      - {material: IRON_CHESTPLATE}
+      - {material: IRON_LEGGINGS}
+      - {material: IRON_BOOTS}
+      - {material: IRON_SWORD}
+      - {material: IRON_PICKAXE}
+      - {material: IRON_AXE}
+      - {material: IRON_SHOVEL}
+      - {material: SHIELD}
+      - {material: BOW}
+      - {material: ARROW, amount: 32}
+      - {material: COOKED_BEEF, amount: 32}
+      - {material: GOLDEN_APPLE, amount: 2}
+
+  advanced:
+    name: Advanced Kit
+    icon: DIAMOND_CHESTPLATE
+    description: ["&7Diamond armor and tools", "&7with enchantments."]
+    price: 40
+    currency: diamonds
+    cooldown-seconds: 0
+    items:
+      - {material: DIAMOND_HELMET, enchants: {protection: 2, unbreaking: 2}}
+      - {material: DIAMOND_CHESTPLATE, enchants: {protection: 2, unbreaking: 2}}
+      - {material: DIAMOND_LEGGINGS, enchants: {protection: 2, unbreaking: 2}}
+      - {material: DIAMOND_BOOTS, enchants: {protection: 2, unbreaking: 2}}
+      - {material: DIAMOND_SWORD, enchants: {sharpness: 2, unbreaking: 2}}
+      - {material: DIAMOND_PICKAXE, enchants: {efficiency: 3, unbreaking: 2}}
+      - {material: DIAMOND_AXE, enchants: {efficiency: 3, unbreaking: 2}}
+      - {material: SHIELD}
+      - {material: GOLDEN_APPLE, amount: 8}
+      - {material: COOKED_BEEF, amount: 64}
+      - {material: ENDER_PEARL, amount: 8}
+
+  endgame:
+    name: Endgame Kit
+    icon: NETHERITE_CHESTPLATE
+    description: ["&7Full enchanted Netherite, weapons,", "&7spear (if supported), Elytra and supplies."]
+    price: 150
+    currency: diamonds
+    cooldown-seconds: 0
+    items:
+      - {material: NETHERITE_HELMET, enchants: {protection: 4, unbreaking: 3, mending: 1, respiration: 3, aqua_affinity: 1}}
+      - {material: NETHERITE_CHESTPLATE, enchants: {protection: 4, unbreaking: 3, mending: 1}}
+      - {material: NETHERITE_LEGGINGS, enchants: {protection: 4, unbreaking: 3, mending: 1}}
+      - {material: NETHERITE_BOOTS, enchants: {protection: 4, unbreaking: 3, mending: 1, feather_falling: 4, depth_strider: 3}}
+      - {material: NETHERITE_SWORD, enchants: {sharpness: 5, unbreaking: 3, mending: 1, looting: 3, fire_aspect: 2}}
+      - {material: NETHERITE_AXE, enchants: {sharpness: 5, efficiency: 5, unbreaking: 3, mending: 1}}
+      - {material: NETHERITE_PICKAXE, enchants: {efficiency: 5, unbreaking: 3, mending: 1, fortune: 3}}
+      - {material: NETHERITE_SHOVEL, enchants: {efficiency: 5, unbreaking: 3, mending: 1}}
+      - {material: NETHERITE_SPEAR, enchants: {unbreaking: 3, mending: 1}}
+      - {material: BOW, enchants: {power: 5, unbreaking: 3, mending: 1, infinity: 1}}
+      - {material: ELYTRA, enchants: {unbreaking: 3, mending: 1}}
+      - {material: FIREWORK_ROCKET, amount: 64}
+      - {material: SHIELD, enchants: {unbreaking: 3, mending: 1}}
+      - {material: ENCHANTED_GOLDEN_APPLE, amount: 8}
+      - {material: TOTEM_OF_UNDYING}
+      - {material: ENDER_PEARL, amount: 16}
+      - {material: COOKED_BEEF, amount: 64}
