@@ -19,6 +19,9 @@ jobs:
       - name: Extract update ZIP
         run: unzip -o ModsForKnightSMP-update2-flat.zip -d .
 
+      - name: Remove obsolete files
+        run: rm -f Currency.java TeleportManager.java
+
       - name: Set up Java 25
         uses: actions/setup-java@v4
         with:
