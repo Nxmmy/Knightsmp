@@ -4,6 +4,7 @@ import dev.knightsmp.mods.KnightPlugin;
 import dev.knightsmp.mods.economy.Account;
 import dev.knightsmp.mods.kits.KitManager.Kit;
 import dev.knightsmp.mods.util.Items;
+import dev.knightsmp.mods.util.Money;
 import dev.knightsmp.mods.util.Text;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -18,7 +19,8 @@ public final class KitMenu extends Menu {
     private ItemStack icon(Kit k) {
         List<String> lore = new ArrayList<>(k.desc());
         lore.add(" ");
-        lore.add("&8Price: " + (k.price() == 0 ? "&aFree" : k.currency().fmt(k.price())));
+        lore.add("&8Price: " + (k.price() == 0 ? "&aFree" : Money.fmt(k.price())));
+        lore.add("&8Your balance: " + Money.fmt(plugin.economy.balance(player)));
         Account a = plugin.economy.get(player);
         long cd = a == null ? 0 : plugin.kits.cooldownLeft(a, k);
         if (k.cooldown() > 0) lore.add("&8Cooldown: &7" + Text.duration(k.cooldown()) + (cd > 0 ? " &c(ready in " + Text.duration(cd) + ")" : " &a(ready)"));
@@ -29,7 +31,7 @@ public final class KitMenu extends Menu {
             if (shown++ >= 10) { lore.add("&7  ...and " + (k.items().size() - 10) + " more"); break; }
             lore.add("&7  " + it.getAmount() + "x " + Text.pretty(it.getType()) + (it.getEnchantments().isEmpty() ? "" : " &d✦"));
         }
-        return Items.make(k.icon(), "&d&l" + k.name(), lore, k.price() >= 100);
+        return Items.make(k.icon(), "&d&l" + k.name(), lore, k.price() >= 1000);
     }
 
     @Override
@@ -42,10 +44,8 @@ public final class KitMenu extends Menu {
             int slot = 10 + i + (i / 7) * 2;
             i++;
             set(slot, icon(k), e -> {
-                ConfirmMenu cm = new ConfirmMenu(plugin, player, "&5&lConfirm Kit", icon(k), () -> {
-                    plugin.kits.purchase(player, k);
-                    go(new KitMenu(plugin, player));
-                }, () -> go(new KitMenu(plugin, player)));
+                ConfirmMenu cm = new ConfirmMenu(plugin, player, "&5&lConfirm Kit", icon(k), () -> plugin.kits.purchase(player, k, () -> go(new KitMenu(plugin, player))),
+                        () -> go(new KitMenu(plugin, player)));
                 go(cm);
             });
         }

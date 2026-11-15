@@ -43,6 +43,8 @@ public final class Listeners implements Listener {
     public void onJoin(PlayerJoinEvent e) {
         Player p = e.getPlayer();
         plugin.bounty.onJoin(p);
+        plugin.hud.attach(p);
+        plugin.stats.onJoin(p);
         plugin.kits.giveStarter(p);
     }
 
@@ -62,9 +64,10 @@ public final class Listeners implements Listener {
             }
         }
         plugin.combat.untag(p);
-        plugin.teleport.onQuit(p);
-        var acc = plugin.economy.get(p);
-        if (acc != null) plugin.economy.save(acc);
+        plugin.home.onQuit(p);
+        plugin.fx.onQuit(p);
+        plugin.stats.onQuit(p);
+        plugin.hud.detach(p);
     }
 
     // ---------- combat ----------
@@ -85,17 +88,17 @@ public final class Listeners implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onDamage(EntityDamageEvent e) {
-        if (e.getEntity() instanceof Player p && e.getFinalDamage() > 0 && plugin.teleport.isPending(p)
-                && plugin.getConfig().getBoolean("teleport.cancel-on-damage", true))
-            plugin.teleport.cancelPending(p, "tp-cancel-damage");
+        if (e.getEntity() instanceof Player p && e.getFinalDamage() > 0 && plugin.home.isPending(p)
+                && plugin.getConfig().getBoolean("home.cancel-on-damage", true))
+            plugin.home.cancel(p, "home-cancel-damage");
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onDeath(PlayerDeathEvent e) {
         Player victim = e.getEntity();
         plugin.bounty.handleDeath(victim);
+        plugin.stats.onDeath(victim);
         plugin.combat.untag(victim);
-        if (plugin.getConfig().getBoolean("teleport.back-on-death", true)) plugin.teleport.setBack(victim, victim.getLocation());
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)

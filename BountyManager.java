@@ -2,8 +2,11 @@ package dev.knightsmp.mods.bounty;
 
 import dev.knightsmp.mods.KnightPlugin;
 import dev.knightsmp.mods.economy.Account;
-import dev.knightsmp.mods.economy.Currency;
+import dev.knightsmp.mods.economy.EconomyManager.Change;
+import dev.knightsmp.mods.gui.BountyMenu;
 import dev.knightsmp.mods.storage.Database;
+import dev.knightsmp.mods.storage.Sql;
+import dev.knightsmp.mods.util.Money;
 import dev.knightsmp.mods.util.Text;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
@@ -20,8 +23,10 @@ import java.sql.ResultSet;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -32,6 +37,7 @@ public final class BountyManager {
 
     private final KnightPlugin plugin;
     private final Deque<Kill> kills = new ArrayDeque<>();
+    private final Set<UUID> claiming = new HashSet<>();   // victims whose death is being processed (blocks duplicate events)
     private UUID wantedId;
     private String wantedName;
 
@@ -43,8 +49,7 @@ public final class BountyManager {
     public CompletableFuture<List<Entry>> leaderboard(int limit, long minBounty) {
         return plugin.db.call(c -> {
             List<Entry> out = new ArrayList<>();
-            try (PreparedStatement ps = Database.bind(c, "SELECT uuid,name,bounty FROM accounts WHERE bounty>=? ORDER BY bounty DESC, rowid ASC LIMIT ?", minBounty, limit);
-                 ResultSet rs = ps.executeQuery()) {
+            try (PreparedStatement ps = Database.bind(c, Sql.LEADERBOARD, minBounty, limit); ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) out.add(new Entry(UUID.fromString(rs.getString(1)), rs.getString(2), rs.getLong(3)));
             }
             return out;
@@ -52,7 +57,7 @@ public final class BountyManager {
     }
 
     // ---------- PvP kill handling ----------
-    /** Only genuine PvP counts: last damage must come from a player (melee or projectile). Environment/mob deaths are ignored. */
+    /** Only genuine PvP counts: the last damage must come from a player (melee or projectile). Environment/mob deaths are ignored. */
     public Player pvpKiller(Player victim) {
         EntityDamageEvent last = victim.getLastDamageCause();
         if (last instanceof EntityDamageByEntityEvent ed) {
@@ -63,36 +68,63 @@ public final class BountyManager {
         return null;
     }
 
+    /**
+     * One transaction per death: victim's bounty is claimed (compare-and-set, so it can only pay out once),
+     * the reward is credited, and the killer's bounty rises - all or nothing.
+     * A kill blocked by anti-abuse rules changes nothing at all (so an alt cannot "wash" a bounty by killing its main).
+     */
     public void handleDeath(Player victim) {
         if (!enabled()) return;
         Player killer = pvpKiller(victim);
         if (killer == null || killer.getUniqueId().equals(victim.getUniqueId())) return;
         Account va = plugin.economy.get(victim), ka = plugin.economy.get(killer);
         if (va == null || ka == null) return;
+        if (!claiming.add(victim.getUniqueId())) return; // duplicate death event or claim already in flight
 
-        long victimBounty = va.bounty;
-        va.bounty = 0; // PvP death always resets the victim
         String blocked = abuseCheck(killer, victim);
-        if (blocked == null) {
-            long max = plugin.getConfig().getLong("bounty.max-bounty", 1_000_000L);
-            ka.bounty = Math.min(max, ka.bounty + plugin.getConfig().getLong("bounty.increase-per-kill", 5));
-            kills.addLast(new Kill(killer.getUniqueId(), victim.getUniqueId(), System.currentTimeMillis()));
-            prune();
-            plugin.send(killer, "bounty-gain", "%bounty%", Text.num(ka.bounty));
-            if (victimBounty > 0) {
-                Currency cur = Currency.parse(plugin.getConfig().getString("bounty.reward-currency", "iron"));
-                if (cur == null) cur = Currency.IRON;
-                long reward = Math.round(victimBounty * plugin.getConfig().getDouble("bounty.reward-multiplier", 1.0));
-                plugin.economy.reward(killer, cur, reward, "BOUNTY");
-                plugin.broadcast("bounty-claimed-broadcast", "%killer%", killer.getName(), "%victim%", victim.getName(), "%reward%", cur.fmt(reward));
-            }
-        } else {
+        if (blocked != null) {
+            claiming.remove(victim.getUniqueId());
             plugin.send(killer, blocked);
+            return;
         }
-        if (victimBounty > 0) plugin.send(victim, "bounty-reset", "%bounty%", Text.num(victimBounty));
-        plugin.economy.save(va);
-        plugin.economy.save(ka);
-        refreshRole();
+        final long victimBounty = va.bounty;
+        final long max = Math.max(0, plugin.getConfig().getLong("bounty.max-bounty", 1_000_000L));
+        final long inc = Math.max(0, plugin.getConfig().getLong("bounty.increase-per-kill", 50));
+        long reward = 0;
+        if (victimBounty > 0) {
+            double mult = Math.max(0, plugin.getConfig().getDouble("bounty.reward-multiplier", 1.0));
+            reward = Math.max(0, Math.min(Math.round(victimBounty * mult), plugin.economy.cap() - ka.dollars));
+        }
+
+        final long fReward = reward;
+        final String vid = va.id.toString(), kid = ka.id.toString();
+        List<Change> changes = reward > 0 ? List.of(new Change(ka.id, reward, va.id, "BOUNTY")) : List.of();
+        kills.addLast(new Kill(killer.getUniqueId(), victim.getUniqueId(), System.currentTimeMillis()));
+        prune();
+
+        plugin.economy.commit("BOUNTY", changes, c -> {
+            if (victimBounty > 0 && Database.run(c, Sql.BOUNTY_CLAIM, vid, victimBounty) != 1) return false; // already claimed
+            if (inc > 0 && Database.run(c, Sql.BOUNTY_ADD, max, inc, kid) != 1) return false;
+            return Database.run(c, Sql.KILLS_ADD, kid) == 1;   // every valid PvP kill is counted exactly once
+        }, () -> {
+            va.bounty = 0;
+            ka.bounty = Math.min(max, ka.bounty + inc);
+            ka.kills++;
+            ka.streak++;
+            ka.bestStreak = Math.max(ka.bestStreak, ka.streak);
+        }, ok -> {
+            claiming.remove(victim.getUniqueId());
+            if (!ok) return;
+            if (inc > 0) plugin.send(killer, "bounty-gain", "%bounty%", Money.fmt(ka.bounty));
+            if (victimBounty > 0) {
+                plugin.send(victim, "bounty-reset", "%bounty%", Money.fmt(victimBounty));
+                if (fReward > 0) plugin.broadcast("bounty-claimed-broadcast", "%killer%", killer.getName(), "%victim%", victim.getName(), "%reward%", Money.fmt(fReward));
+            }
+            plugin.hud.touch(ka.id);
+            plugin.hud.touch(va.id);
+            refreshRole();
+            BountyMenu.refreshAll(plugin);
+        });
     }
 
     private void prune() {
@@ -107,8 +139,7 @@ public final class BountyManager {
         long minAge = plugin.getConfig().getLong("bounty.min-account-age-minutes", 10) * 60_000L;
         if (minAge > 0 && (now - killer.getFirstPlayed() < minAge || now - victim.getFirstPlayed() < minAge)) return "bounty-blocked-age";
 
-        if (plugin.getConfig().getBoolean("bounty.block-same-ip", true)
-                && killer.getAddress() != null && victim.getAddress() != null) {
+        if (plugin.getConfig().getBoolean("bounty.block-same-ip", true) && killer.getAddress() != null && victim.getAddress() != null) {
             InetAddress a = killer.getAddress().getAddress(), b = victim.getAddress().getAddress();
             // loopback/private addresses are shared by Geyser/proxy setups, so they say nothing about alts
             if (a != null && a.equals(b) && !a.isLoopbackAddress() && !a.isAnyLocalAddress() && !a.isSiteLocalAddress()) return "bounty-blocked-ip";
@@ -134,12 +165,26 @@ public final class BountyManager {
         });
     }
 
-    private Team team() {
-        Scoreboard sb = Bukkit.getScoreboardManager().getMainScoreboard();
+    /** Main scoreboard plus every player's HUD scoreboard, so the WANTED #1 prefix shows no matter which board a viewer uses. */
+    private List<Scoreboard> allBoards() {
+        List<Scoreboard> out = new ArrayList<>();
+        out.add(Bukkit.getScoreboardManager().getMainScoreboard());
+        out.addAll(plugin.hud.boards());
+        return out;
+    }
+
+    private Team team(Scoreboard sb) {
         Team t = sb.getTeam(TEAM);
         if (t == null) t = sb.registerNewTeam(TEAM);
         t.prefix(Text.c(plugin.getConfig().getString("wanted-role.display", "&5&lKnightSMP - WANTED #1") + " &r"));
         return t;
+    }
+
+    /** Called when a HUD scoreboard is created so it also knows the current WANTED #1 holder. */
+    public void syncBoard(Scoreboard sb) {
+        if (wantedName == null) return;
+        Team t = team(sb);
+        if (!t.hasEntry(wantedName)) t.addEntry(wantedName);
     }
 
     private void apply(Entry top) {
@@ -161,12 +206,11 @@ public final class BountyManager {
     }
 
     private void decorate(Player p) {
-        Team t = team();
-        if (!t.hasEntry(p.getName())) t.addEntry(p.getName());
+        for (Scoreboard sb : allBoards()) { Team t = team(sb); if (!t.hasEntry(p.getName())) t.addEntry(p.getName()); }
         p.playerListName(Text.c(plugin.getConfig().getString("wanted-role.display", "") + " &r" + p.getName()));
     }
     private void strip(UUID id, String name) {
-        if (name != null) { Team t = team(); if (t.hasEntry(name)) t.removeEntry(name); }
+        if (name != null) for (Scoreboard sb : allBoards()) { Team t = team(sb); if (t.hasEntry(name)) t.removeEntry(name); }
         Player p = Bukkit.getPlayer(id);
         if (p != null) p.playerListName(null);
     }
@@ -180,14 +224,15 @@ public final class BountyManager {
         if (wantedId != null && wantedId.equals(p.getUniqueId())) decorate(p);
         refreshRole();
     }
-    public void shutdown() {
-        if (wantedId != null) strip(wantedId, wantedName);
-    }
+    public void shutdown() { if (wantedId != null) strip(wantedId, wantedName); }
 
     // ---------- admin ----------
-    public void setBounty(Account a, long amount) {
-        a.bounty = Math.max(0, amount);
-        plugin.economy.save(a);
-        refreshRole();
+    public void setBounty(Account a, long amount, java.util.function.Consumer<Boolean> done) {
+        final long v = Math.max(0, Math.min(amount, plugin.getConfig().getLong("bounty.max-bounty", 1_000_000L)));
+        final String id = a.id.toString();
+        plugin.economy.commit("BOUNTY_ADMIN", List.of(), c -> Database.run(c, Sql.BOUNTY_SET, v, id) == 1, () -> a.bounty = v, ok -> {
+            if (ok) { plugin.hud.touch(a.id); refreshRole(); BountyMenu.refreshAll(plugin); }
+            done.accept(ok);
+        });
     }
 }

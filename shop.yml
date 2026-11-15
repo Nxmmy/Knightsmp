@@ -1,138 +1,291 @@
-# General shop. Each item: material, price (per purchase of `amount` items), currency (iron/diamonds), amount (default 1), desc (optional).
+# General shop - all prices in Dollars ($).  A price is for the WHOLE pack shown (amount).
+# Hand-priced items live here. Blocks/plants/redstone etc. are priced by the rules in blocks.yml (every obtainable block the server knows),
+# enchantment books by enchants.yml and potions by potions.yml. Prices marked EXACT in README come straight from the owner's specification.
 categories:
-  building:
-    name: Building Blocks
-    icon: BRICKS
-    description: ["&7Blocks for building."]
-    items:
-      - {material: OAK_PLANKS, amount: 32, price: 3, currency: iron}
-      - {material: SPRUCE_PLANKS, amount: 32, price: 3, currency: iron}
-      - {material: COBBLESTONE, amount: 64, price: 3, currency: iron}
-      - {material: STONE_BRICKS, amount: 32, price: 4, currency: iron}
-      - {material: BRICKS, amount: 32, price: 6, currency: iron}
-      - {material: GLASS, amount: 32, price: 4, currency: iron}
-      - {material: WHITE_WOOL, amount: 16, price: 4, currency: iron}
-      - {material: SMOOTH_STONE, amount: 32, price: 4, currency: iron}
-      - {material: SANDSTONE, amount: 32, price: 4, currency: iron}
-      - {material: TERRACOTTA, amount: 16, price: 5, currency: iron}
-      - {material: QUARTZ_BLOCK, amount: 16, price: 8, currency: iron}
-      - {material: PRISMARINE, amount: 16, price: 10, currency: iron}
-  nature:
-    name: Nature
-    icon: OAK_SAPLING
-    description: ["&7Plants, seeds and natural blocks."]
-    items:
-      - {material: OAK_SAPLING, amount: 4, price: 2, currency: iron}
-      - {material: OAK_LOG, amount: 16, price: 4, currency: iron}
-      - {material: DIRT, amount: 64, price: 2, currency: iron}
-      - {material: GRASS_BLOCK, amount: 16, price: 4, currency: iron}
-      - {material: SAND, amount: 32, price: 3, currency: iron}
-      - {material: BAMBOO, amount: 16, price: 4, currency: iron}
-      - {material: WHEAT_SEEDS, amount: 16, price: 2, currency: iron}
-      - {material: MOSS_BLOCK, amount: 8, price: 6, currency: iron}
-      - {material: LILY_PAD, amount: 8, price: 3, currency: iron}
-      - {material: VINE, amount: 8, price: 3, currency: iron}
-      - {material: SEA_PICKLE, amount: 4, price: 4, currency: iron}
-      - {material: BEE_NEST, amount: 1, price: 6, currency: diamonds, desc: "Rare decoration"}
   ores:
-    name: Ores and Mining
+    name: "Ores and Mining"
     icon: DIAMOND_ORE
-    description: ["&7Ores, ingots and mining supplies."]
+    description: ["&7Ores, ingots, TNT and mining materials."]
     items:
-      - {material: COAL, amount: 16, price: 4, currency: iron}
-      - {material: RAW_IRON, amount: 8, price: 6, currency: iron}
-      - {material: IRON_INGOT, amount: 8, price: 8, currency: iron}
-      - {material: GOLD_INGOT, amount: 8, price: 12, currency: iron}
-      - {material: COPPER_INGOT, amount: 16, price: 6, currency: iron}
-      - {material: LAPIS_LAZULI, amount: 16, price: 8, currency: iron}
-      - {material: REDSTONE, amount: 16, price: 5, currency: iron}
-      - {material: DIAMOND, amount: 1, price: 6, currency: iron, desc: "Bought with iron"}
-      - {material: EMERALD, amount: 4, price: 2, currency: diamonds}
-      - {material: ANCIENT_DEBRIS, amount: 1, price: 12, currency: diamonds}
-      - {material: NETHERITE_SCRAP, amount: 1, price: 14, currency: diamonds}
-      - {material: TNT, amount: 4, price: 16, currency: iron}
-  redstone:
-    name: Redstone
-    icon: REDSTONE
-    description: ["&7Redstone components."]
-    items:
-      - {material: REDSTONE, amount: 32, price: 8, currency: iron}
-      - {material: REPEATER, amount: 4, price: 6, currency: iron}
-      - {material: COMPARATOR, amount: 2, price: 6, currency: iron}
-      - {material: PISTON, amount: 4, price: 8, currency: iron}
-      - {material: STICKY_PISTON, amount: 2, price: 8, currency: iron}
-      - {material: OBSERVER, amount: 2, price: 6, currency: iron}
-      - {material: HOPPER, amount: 2, price: 10, currency: iron}
-      - {material: DISPENSER, amount: 1, price: 4, currency: iron}
-      - {material: LEVER, amount: 4, price: 2, currency: iron}
-      - {material: REDSTONE_LAMP, amount: 4, price: 8, currency: iron}
-      - {material: TARGET, amount: 2, price: 5, currency: iron}
-      - {material: SLIME_BLOCK, amount: 2, price: 8, currency: iron}
-  food:
-    name: Food
-    icon: COOKED_BEEF
-    description: ["&7Keep your hunger bar full."]
-    items:
-      - {material: BREAD, amount: 16, price: 3, currency: iron}
-      - {material: COOKED_BEEF, amount: 16, price: 5, currency: iron}
-      - {material: COOKED_PORKCHOP, amount: 16, price: 5, currency: iron}
-      - {material: COOKED_CHICKEN, amount: 16, price: 4, currency: iron}
-      - {material: BAKED_POTATO, amount: 16, price: 3, currency: iron}
-      - {material: PUMPKIN_PIE, amount: 8, price: 4, currency: iron}
-      - {material: GOLDEN_CARROT, amount: 8, price: 6, currency: iron}
-      - {material: APPLE, amount: 8, price: 3, currency: iron}
-      - {material: GOLDEN_APPLE, amount: 1, price: 10, currency: iron}
-      - {material: ENCHANTED_GOLDEN_APPLE, amount: 1, price: 12, currency: diamonds}
-      - {material: CAKE, amount: 1, price: 6, currency: iron}
-      - {material: MILK_BUCKET, amount: 1, price: 3, currency: iron}
+      - {material: COAL, amount: 16, price: 15}
+      - {material: RAW_IRON, amount: 8, price: 25}
+      - {material: IRON_INGOT, amount: 8, price: 25}
+      - {material: GOLD_INGOT, amount: 8, price: 20}
+      - {material: COPPER_INGOT, amount: 16, price: 15}
+      - {material: LAPIS_LAZULI, amount: 32, price: 50}
+      - {material: REDSTONE, amount: 16, price: 35}
+      - {material: DIAMOND, amount: 16, price: 185}
+      - {material: EMERALD, amount: 4, price: 15}
+      - {material: ANCIENT_DEBRIS, amount: 2, price: 750}
+      - {material: NETHERITE_SCRAP, amount: 2, price: 500}
+      - {material: TNT, amount: 32, price: 75}
+      - {material: RAW_COPPER, amount: 8, price: 12}
+      - {material: RAW_GOLD, amount: 8, price: 24}
+      - {material: QUARTZ, amount: 16, price: 30}
+      - {material: AMETHYST_SHARD, amount: 8, price: 28}
+      - {material: GLOWSTONE_DUST, amount: 16, price: 32}
+      - {material: NETHERITE_INGOT, price: 1200}
+      - {material: NETHERITE_UPGRADE_SMITHING_TEMPLATE, price: 350}
   combat:
-    name: Combat
+    name: "Combat"
     icon: DIAMOND_SWORD
-    description: ["&7Weapons, armor and combat supplies."]
+    description: ["&7Armor sets, weapons and free armor trims."]
     items:
-      - {material: IRON_SWORD, amount: 1, price: 12, currency: iron}
-      - {material: IRON_HELMET, amount: 1, price: 14, currency: iron}
-      - {material: IRON_CHESTPLATE, amount: 1, price: 22, currency: iron}
-      - {material: IRON_LEGGINGS, amount: 1, price: 20, currency: iron}
-      - {material: IRON_BOOTS, amount: 1, price: 12, currency: iron}
-      - {material: BOW, amount: 1, price: 10, currency: iron}
-      - {material: CROSSBOW, amount: 1, price: 12, currency: iron}
-      - {material: ARROW, amount: 32, price: 6, currency: iron}
-      - {material: SHIELD, amount: 1, price: 10, currency: iron}
-      - {material: DIAMOND_SWORD, amount: 1, price: 6, currency: diamonds}
-      - {material: DIAMOND_CHESTPLATE, amount: 1, price: 12, currency: diamonds}
-      - {material: TOTEM_OF_UNDYING, amount: 1, price: 20, currency: diamonds}
+      - {set: [IRON_HELMET, IRON_CHESTPLATE, IRON_LEGGINGS, IRON_BOOTS], name: "Full Iron Armor Set", icon: IRON_CHESTPLATE, price: 150}
+      - {set: [DIAMOND_HELMET, DIAMOND_CHESTPLATE, DIAMOND_LEGGINGS, DIAMOND_BOOTS], name: "Full Diamond Armor Set", icon: DIAMOND_CHESTPLATE, price: 250}
+      - {set: [NETHERITE_HELMET, NETHERITE_CHESTPLATE, NETHERITE_LEGGINGS, NETHERITE_BOOTS], name: "Full Netherite Armor Set", icon: NETHERITE_CHESTPLATE, price: 3500}
+      - {set: [LEATHER_HELMET, LEATHER_CHESTPLATE, LEATHER_LEGGINGS, LEATHER_BOOTS], name: "Full Leather Armor Set", icon: LEATHER_CHESTPLATE, price: 25}
+      - {set: [CHAINMAIL_HELMET, CHAINMAIL_CHESTPLATE, CHAINMAIL_LEGGINGS, CHAINMAIL_BOOTS], name: "Full Chainmail Armor Set", icon: CHAINMAIL_CHESTPLATE, price: 80}
+      - {set: [GOLDEN_HELMET, GOLDEN_CHESTPLATE, GOLDEN_LEGGINGS, GOLDEN_BOOTS], name: "Full Golden Armor Set", icon: GOLDEN_CHESTPLATE, price: 70}
+      - {set: [COPPER_HELMET, COPPER_CHESTPLATE, COPPER_LEGGINGS, COPPER_BOOTS], name: "Full Copper Armor Set", icon: COPPER_CHESTPLATE, price: 55, optional: true}
+      - {material: WOODEN_SWORD, price: 6}
+      - {material: STONE_SWORD, price: 12}
+      - {material: GOLDEN_SWORD, price: 25}
+      - {material: IRON_SWORD, price: 35}
+      - {material: DIAMOND_SWORD, price: 450}
+      - {material: NETHERITE_SWORD, price: 1400}
+      - {material: IRON_HELMET, price: 38}
+      - {material: IRON_CHESTPLATE, price: 60}
+      - {material: IRON_LEGGINGS, price: 55}
+      - {material: IRON_BOOTS, price: 30}
+      - {material: DIAMOND_HELMET, price: 70}
+      - {material: DIAMOND_CHESTPLATE, price: 110}
+      - {material: DIAMOND_LEGGINGS, price: 100}
+      - {material: DIAMOND_BOOTS, price: 60}
+      - {material: NETHERITE_HELMET, price: 900}
+      - {material: NETHERITE_CHESTPLATE, price: 1300}
+      - {material: NETHERITE_LEGGINGS, price: 1150}
+      - {material: NETHERITE_BOOTS, price: 800}
+      - {material: TURTLE_HELMET, price: 150}
+      - {material: BOW, price: 35}
+      - {material: CROSSBOW, price: 55}
+      - {material: ARROW, amount: 32, price: 24}
+      - {material: SHIELD, price: 40}
+      - {material: TRIDENT, price: 350}
+      - {material: MACE, price: 2500, optional: true}
+      - {material: TOTEM_OF_UNDYING, price: 900}
+      - {material: WIND_CHARGE, amount: 16, price: 40, optional: true}
+      - {material: SPECTRAL_ARROW, amount: 16, price: 45, optional: true}
+      - {material: WOLF_ARMOR, price: 65, optional: true}
+      - {material: LEATHER_HORSE_ARMOR, price: 20}
+      - {material: IRON_HORSE_ARMOR, price: 40}
+      - {material: GOLDEN_HORSE_ARMOR, price: 60}
+      - {material: DIAMOND_HORSE_ARMOR, price: 120}
+      - {material: COPPER_SWORD, price: 20, optional: true}
+      - {material: COPPER_SPEAR, price: 22, optional: true}
+      - {material: WOODEN_SPEAR, price: 8, optional: true}
+      - {material: STONE_SPEAR, price: 15, optional: true}
+      - {material: IRON_SPEAR, price: 40, optional: true}
+      - {material: GOLDEN_SPEAR, price: 30, optional: true}
+      - {material: DIAMOND_SPEAR, price: 130, optional: true}
+      - {material: NETHERITE_SPEAR, price: 1300, optional: true}
   tools:
-    name: Tools
+    name: "Tools"
     icon: IRON_PICKAXE
     description: ["&7Tools and utility items."]
     items:
-      - {material: STONE_PICKAXE, amount: 1, price: 4, currency: iron}
-      - {material: IRON_PICKAXE, amount: 1, price: 14, currency: iron}
-      - {material: IRON_AXE, amount: 1, price: 14, currency: iron}
-      - {material: IRON_SHOVEL, amount: 1, price: 6, currency: iron}
-      - {material: IRON_HOE, amount: 1, price: 8, currency: iron}
-      - {material: FISHING_ROD, amount: 1, price: 6, currency: iron}
-      - {material: SHEARS, amount: 1, price: 8, currency: iron}
-      - {material: BUCKET, amount: 1, price: 10, currency: iron}
-      - {material: FLINT_AND_STEEL, amount: 1, price: 6, currency: iron}
-      - {material: DIAMOND_PICKAXE, amount: 1, price: 8, currency: diamonds}
-      - {material: DIAMOND_AXE, amount: 1, price: 8, currency: diamonds}
-      - {material: SPYGLASS, amount: 1, price: 8, currency: iron}
-  misc:
-    name: Miscellaneous
-    icon: ENDER_CHEST
-    description: ["&7Everything else."]
+      - {material: WOODEN_PICKAXE, price: 5}
+      - {material: WOODEN_AXE, price: 5}
+      - {material: WOODEN_SHOVEL, price: 4}
+      - {material: WOODEN_HOE, price: 4}
+      - {material: STONE_PICKAXE, price: 10}
+      - {material: STONE_AXE, price: 10}
+      - {material: STONE_SHOVEL, price: 8}
+      - {material: STONE_HOE, price: 8}
+      - {material: GOLDEN_PICKAXE, price: 20}
+      - {material: GOLDEN_AXE, price: 20}
+      - {material: GOLDEN_SHOVEL, price: 15}
+      - {material: GOLDEN_HOE, price: 15}
+      - {material: IRON_PICKAXE, price: 40}
+      - {material: IRON_AXE, price: 40}
+      - {material: IRON_SHOVEL, price: 22}
+      - {material: IRON_HOE, price: 30}
+      - {material: DIAMOND_PICKAXE, price: 120}
+      - {material: DIAMOND_AXE, price: 120}
+      - {material: DIAMOND_SHOVEL, price: 65}
+      - {material: DIAMOND_HOE, price: 90}
+      - {material: NETHERITE_PICKAXE, price: 1350}
+      - {material: NETHERITE_AXE, price: 1400}
+      - {material: NETHERITE_SHOVEL, price: 1100}
+      - {material: NETHERITE_HOE, price: 1000}
+      - {material: SHEARS, price: 25}
+      - {material: FISHING_ROD, price: 15}
+      - {material: FLINT_AND_STEEL, price: 18}
+      - {material: BUCKET, price: 30}
+      - {material: WATER_BUCKET, price: 34}
+      - {material: LAVA_BUCKET, price: 50}
+      - {material: COMPASS, price: 28}
+      - {material: CLOCK, price: 35}
+      - {material: SPYGLASS, price: 30}
+      - {material: BRUSH, price: 22}
+      - {material: CARROT_ON_A_STICK, price: 20}
+      - {material: WARPED_FUNGUS_ON_A_STICK, price: 22}
+      - {material: LEAD, amount: 2, price: 16}
+      - {material: NAME_TAG, price: 50}
+      - {material: SADDLE, price: 90}
+      - {material: ELYTRA, price: 2500}
+      - {material: MAP, price: 12}
+      - {material: ENDER_EYE, amount: 4, price: 90}
+      - {material: FIREWORK_ROCKET, amount: 16, price: 30}
+  food:
+    name: "Food"
+    icon: COOKED_BEEF
+    description: ["&7Keep your hunger bar full."]
     items:
-      - {material: TORCH, amount: 64, price: 4, currency: iron}
-      - {material: LADDER, amount: 16, price: 3, currency: iron}
-      - {material: CHEST, amount: 4, price: 6, currency: iron}
-      - {material: ENDER_PEARL, amount: 4, price: 12, currency: iron}
-      - {material: NAME_TAG, amount: 1, price: 10, currency: iron}
-      - {material: SADDLE, amount: 1, price: 14, currency: iron}
-      - {material: LEAD, amount: 2, price: 6, currency: iron}
-      - {material: EXPERIENCE_BOTTLE, amount: 8, price: 10, currency: iron}
-      - {material: FIREWORK_ROCKET, amount: 16, price: 8, currency: iron}
-      - {material: ELYTRA, amount: 1, price: 80, currency: diamonds, desc: "Take to the skies"}
-      - {material: SHULKER_BOX, amount: 1, price: 40, currency: diamonds}
-      - {material: BEACON, amount: 1, price: 60, currency: diamonds}
+      - {material: BREAD, amount: 16, price: 18}
+      - {material: COOKED_BEEF, amount: 16, price: 30}
+      - {material: COOKED_PORKCHOP, amount: 16, price: 30}
+      - {material: COOKED_CHICKEN, amount: 16, price: 22}
+      - {material: COOKED_MUTTON, amount: 16, price: 26}
+      - {material: COOKED_RABBIT, amount: 16, price: 24}
+      - {material: COOKED_COD, amount: 16, price: 18}
+      - {material: COOKED_SALMON, amount: 16, price: 22}
+      - {material: BAKED_POTATO, amount: 16, price: 16}
+      - {material: PUMPKIN_PIE, amount: 8, price: 28}
+      - {material: GOLDEN_CARROT, amount: 8, price: 45}
+      - {material: APPLE, amount: 8, price: 16}
+      - {material: GOLDEN_APPLE, price: 110}
+      - {material: ENCHANTED_GOLDEN_APPLE, price: 2500}
+      - {material: CAKE, price: 24}
+      - {material: COOKIE, amount: 16, price: 12}
+      - {material: MUSHROOM_STEW, price: 8}
+      - {material: BEETROOT_SOUP, price: 8}
+      - {material: RABBIT_STEW, price: 14}
+      - {material: HONEY_BOTTLE, amount: 4, price: 16}
+      - {material: MILK_BUCKET, price: 26}
+      - {material: BEEF, amount: 16, price: 14}
+      - {material: PORKCHOP, amount: 16, price: 14}
+      - {material: CHICKEN, amount: 16, price: 10}
+      - {material: MUTTON, amount: 16, price: 12}
+      - {material: RABBIT, amount: 16, price: 12}
+      - {material: COD, amount: 16, price: 10}
+      - {material: SALMON, amount: 16, price: 12}
+      - {material: TROPICAL_FISH, amount: 4, price: 10}
+      - {material: PUFFERFISH, amount: 4, price: 16}
+  redstone:
+    name: "Redstone"
+    icon: REDSTONE
+    description: ["&7Every redstone component."]
+    exclude-sold: true
+    items:
+      - {material: REDSTONE, amount: 16, price: 35}
+  stone:
+    name: "Blocks: Stone & Bricks"
+    icon: STONE_BRICKS
+    description: ["&7Stone, bricks, deepslate, sandstone."]
+    exclude-sold: true
+    items: []
+  woodblocks:
+    name: "Blocks: Wood"
+    icon: OAK_PLANKS
+    description: ["&7Planks, stairs, slabs, doors, fences, signs."]
+    exclude-sold: true
+    items: []
+  colored:
+    name: "Blocks: Colored & Glass"
+    icon: CYAN_CONCRETE
+    description: ["&7Wool, concrete, terracotta, glass, banners, beds."]
+    exclude-sold: true
+    items: []
+  metal:
+    name: "Blocks: Metal & Gems"
+    icon: IRON_BLOCK
+    description: ["&7Metal, copper and gem blocks."]
+    exclude-sold: true
+    items: []
+  nether_end:
+    name: "Blocks: Nether & End"
+    icon: NETHERRACK
+    description: ["&7Nether and End building blocks."]
+    exclude-sold: true
+    items: []
+  utility:
+    name: "Blocks: Utility & Decor"
+    icon: CRAFTING_TABLE
+    description: ["&7Workstations, lights, heads and rare blocks."]
+    exclude-sold: true
+    items: []
+  nature_wood:
+    name: "Nature: Logs & Wood"
+    icon: OAK_LOG
+    description: ["&7Every log, wood, stem and root."]
+    items: []
+  nature_leaves:
+    name: "Nature: Leaves & Saplings"
+    icon: OAK_SAPLING
+    description: ["&7Leaves, saplings and azaleas."]
+    items: []
+  nature_plants:
+    name: "Nature: Flowers & Plants"
+    icon: POPPY
+    description: ["&7Flowers, grass, vines, moss and more."]
+    items: []
+  nature_crops:
+    name: "Nature: Crops & Mushrooms"
+    icon: WHEAT
+    description: ["&7Seeds, crops, mushrooms and fungi."]
+    items: []
+  nature_terrain:
+    name: "Nature: Terrain & Ocean"
+    icon: GRASS_BLOCK
+    description: ["&7Dirt, sand, ice, coral, sculk and more."]
+    items: []
+  enchantments:
+    name: "Enchantment Books"
+    icon: ENCHANTED_BOOK
+    description: ["&7Every enchantment, every level.", "&7Priced by how hard it is to obtain."]
+    generate: enchantments
+    items: []
+  potions:
+    name: "Potions"
+    icon: POTION
+    description: ["&7Potions, splash and lingering variants."]
+    generate: potions
+    items: []
+  misc:
+    name: "Miscellaneous"
+    icon: ENDER_CHEST
+    description: ["&7Mob drops, materials and rare items."]
+    items:
+      - {material: STICK, amount: 16, price: 6}
+      - {material: STRING, amount: 16, price: 14}
+      - {material: LEATHER, amount: 8, price: 24}
+      - {material: FEATHER, amount: 16, price: 10}
+      - {material: BONE, amount: 16, price: 14}
+      - {material: BONE_MEAL, amount: 16, price: 12}
+      - {material: GUNPOWDER, amount: 16, price: 40}
+      - {material: SLIME_BALL, amount: 8, price: 40}
+      - {material: ENDER_PEARL, amount: 4, price: 60}
+      - {material: BLAZE_ROD, amount: 4, price: 60}
+      - {material: BLAZE_POWDER, amount: 8, price: 40}
+      - {material: GHAST_TEAR, price: 120}
+      - {material: PHANTOM_MEMBRANE, amount: 4, price: 64}
+      - {material: SPIDER_EYE, amount: 8, price: 16}
+      - {material: ROTTEN_FLESH, amount: 16, price: 8}
+      - {material: INK_SAC, amount: 16, price: 16}
+      - {material: GLOW_INK_SAC, amount: 4, price: 24}
+      - {material: PAPER, amount: 16, price: 12}
+      - {material: BOOK, amount: 4, price: 24}
+      - {material: SUGAR, amount: 16, price: 8}
+      - {material: EGG, amount: 16, price: 10}
+      - {material: CLAY_BALL, amount: 16, price: 14}
+      - {material: BRICK, amount: 16, price: 18}
+      - {material: FLINT, amount: 16, price: 12}
+      - {material: PRISMARINE_SHARD, amount: 8, price: 32}
+      - {material: PRISMARINE_CRYSTALS, amount: 8, price: 40}
+      - {material: NAUTILUS_SHELL, price: 90}
+      - {material: HEART_OF_THE_SEA, price: 800}
+      - {material: ECHO_SHARD, price: 140}
+      - {material: NETHER_STAR, price: 3000}
+      - {material: SHULKER_SHELL, amount: 2, price: 240}
+      - {material: DRAGON_BREATH, price: 400}
+      - {material: EXPERIENCE_BOTTLE, amount: 8, price: 64}
+      - {material: ITEM_FRAME, amount: 4, price: 16}
+      - {material: GLOW_ITEM_FRAME, amount: 4, price: 28}
+      - {material: PAINTING, amount: 4, price: 20}
+      - {material: ARMOR_STAND, price: 20}
+      - {material: MINECART, price: 24}
+      - {material: GLASS_BOTTLE, amount: 16, price: 14}
+      - {material: SNOWBALL, amount: 16, price: 6}
+      - {material: FIRE_CHARGE, amount: 8, price: 24}
+      - {material: NETHER_WART, amount: 8, price: 12}

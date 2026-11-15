@@ -2,9 +2,10 @@ package dev.knightsmp.mods.gui;
 
 import dev.knightsmp.mods.KnightPlugin;
 import dev.knightsmp.mods.economy.Account;
-import dev.knightsmp.mods.economy.Currency;
 import dev.knightsmp.mods.util.Items;
+import dev.knightsmp.mods.util.Money;
 import dev.knightsmp.mods.util.Text;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
@@ -14,7 +15,6 @@ import java.util.UUID;
 public final class TransferMenu extends Menu {
     private final UUID targetId;
     private final String targetName;
-    private Currency currency = Currency.IRON;
     private long amount = 1;
 
     public TransferMenu(KnightPlugin plugin, Player player, Player target) {
@@ -30,31 +30,27 @@ public final class TransferMenu extends Menu {
     @Override
     protected void build() {
         frame();
-        Player target = org.bukkit.Bukkit.getPlayer(targetId);
+        Player target = Bukkit.getPlayer(targetId);
         Account a = plugin.economy.get(player);
-        set(4, Items.head(target != null ? target : org.bukkit.Bukkit.getOfflinePlayer(targetId), "&d" + targetName, List.of("&7Recipient"), false), null);
-        set(13, Items.make(currency.material, currency.color + "&l" + Text.num(amount) + " " + currency.display,
-                List.of("&8Your spendable: " + currency.fmt(plugin.economy.spendable(player, currency)),
-                        a == null ? "" : "&8Account balance: &7" + Text.num(a.get(currency))), false), null);
-        long[] d = {-100, -10, -1, 1, 10, 100};
+        set(4, Items.head(target != null ? target : Bukkit.getOfflinePlayer(targetId), "&d" + targetName, List.of("&7Recipient"), false), null);
+        set(13, Items.make(Material.GOLD_INGOT, "&6&l" + Money.fmt(amount), List.of("&8Your balance: " + Money.fmt(a == null ? 0 : a.dollars)), false), null);
+        long[] d = {-1000, -100, -10, 10, 100, 1000};
         int[] slots = {19, 20, 21, 23, 24, 25};
         for (int i = 0; i < d.length; i++) {
             long v = d[i];
             set(slots[i], Items.make(v < 0 ? Material.RED_STAINED_GLASS_PANE : Material.LIME_STAINED_GLASS_PANE, (v < 0 ? "&c" : "&a+") + v), e -> adjust(v));
         }
-        set(22, Items.make(Material.NAME_TAG, "&7Amount: &f" + Text.num(amount)), null);
-        set(30, Items.make(currency == Currency.IRON ? Material.IRON_INGOT : Material.DIAMOND, "&eCurrency: " + currency.color + currency.display, "&7Click to switch"),
-                e -> { currency = currency == Currency.IRON ? Currency.DIAMOND : Currency.IRON; rebuild(); });
-        set(32, Items.make(Material.EMERALD_BLOCK, "&a&lSend " + currency.fmt(amount), "&7to &f" + targetName, "&7You will be asked to confirm."), e -> {
-            ConfirmMenu cm = new ConfirmMenu(plugin, player, "&5&lConfirm Payment",
-                    Items.make(Material.PAPER, "&fSend " + currency.fmt(amount), "&7To: &d" + targetName), () -> {
-                Player t = org.bukkit.Bukkit.getPlayer(targetId);
+        set(22, Items.make(Material.NAME_TAG, "&7Amount: &a$" + Text.num(amount)), null);
+        set(30, Items.make(Material.RED_STAINED_GLASS_PANE, "&c-1"), e -> adjust(-1));
+        set(32, Items.make(Material.LIME_STAINED_GLASS_PANE, "&a+1"), e -> adjust(1));
+        set(31, Items.make(Material.EMERALD_BLOCK, "&a&lSend " + Money.fmt(amount), "&7to &f" + targetName, "&7You will be asked to confirm."), e -> {
+            final long sendAmount = amount;
+            go(new ConfirmMenu(plugin, player, "&5&lConfirm Payment",
+                    Items.make(Material.PAPER, "&fSend " + Money.fmt(sendAmount), "&7To: &d" + targetName), () -> {
                 Account ta = plugin.economy.cached(targetId);
-                if (t == null || ta == null) plugin.send(player, "player-not-found");
-                else plugin.economy.pay(player, ta, currency, amount);
-                go(new EconomyMenu(plugin, player));
-            }, () -> go(this));
-            go(cm);
+                if (ta == null) { plugin.send(player, "player-not-found"); go(new EconomyMenu(plugin, player)); }
+                else plugin.economy.pay(player, ta, sendAmount, () -> go(new EconomyMenu(plugin, player)));
+            }, () -> go(this)));
         });
         set(40, Items.make(Material.DARK_OAK_DOOR, "&c← Back"), e -> go(new TransferTargetMenu(plugin, player)));
     }

@@ -2,8 +2,11 @@ package dev.knightsmp.mods.kits;
 
 import dev.knightsmp.mods.KnightPlugin;
 import dev.knightsmp.mods.economy.Account;
-import dev.knightsmp.mods.economy.Currency;
+import dev.knightsmp.mods.economy.EconomyManager.Change;
+import dev.knightsmp.mods.storage.Database;
+import dev.knightsmp.mods.storage.Sql;
 import dev.knightsmp.mods.util.Items;
+import dev.knightsmp.mods.util.Money;
 import dev.knightsmp.mods.util.Text;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -21,7 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 public final class KitManager {
-    public record Kit(String id, String name, Material icon, List<String> desc, long price, Currency currency, long cooldown, List<ItemStack> items) {}
+    public record Kit(String id, String name, Material icon, List<String> desc, long price, long cooldown, List<ItemStack> items) {}
 
     private static final String STARTER_MARK = "__starter";
     private final KnightPlugin plugin;
@@ -38,8 +41,6 @@ public final class KitManager {
         for (String id : root.getKeys(false)) {
             ConfigurationSection s = root.getConfigurationSection(id);
             if (s == null) continue;
-            Currency cur = Currency.parse(s.getString("currency", "iron"));
-            if (cur == null) cur = Currency.IRON;
             Material icon = Material.matchMaterial(s.getString("icon", "CHEST"));
             List<ItemStack> items = new ArrayList<>();
             for (Map<?, ?> m : s.getMapList("items")) {
@@ -48,7 +49,7 @@ public final class KitManager {
                 else items.add(st);
             }
             kits.put(id, new Kit(id, s.getString("name", id), icon == null ? Material.CHEST : icon, s.getStringList("description"),
-                    Math.max(0, s.getLong("price", 0)), cur, Math.max(0, s.getLong("cooldown-seconds", 0)), items));
+                    Math.max(0, s.getLong("price", 0)), Math.max(0, s.getLong("cooldown-seconds", 0)), items));
         }
     }
 
@@ -77,28 +78,49 @@ public final class KitManager {
         return Math.max(0, (last + k.cooldown() * 1000L - System.currentTimeMillis() + 999) / 1000);
     }
 
-    public void purchase(Player p, Kit k) {
-        Account a = plugin.economy.get(p);
-        if (a == null) return;
-        long left = cooldownLeft(a, k);
-        if (left > 0) { plugin.send(p, "kit-cooldown", "%time%", Text.duration(left)); return; }
+    private List<ItemStack> copy(Kit k) {
         List<ItemStack> items = new ArrayList<>();
         for (ItemStack it : k.items()) items.add(it.clone());
-        if (!Items.canFit(p, items)) { plugin.send(p, "kit-no-space"); return; }
-        if (k.price() > 0 && (plugin.economy.spendable(p, k.currency()) < k.price()
-                || !plugin.economy.charge(p, k.currency(), k.price(), "KIT", null))) {
-            plugin.send(p, "kit-no-funds", "%price%", k.currency().fmt(k.price()));
-            return;
-        }
-        Items.give(p, items);
-        if (k.cooldown() > 0) stamp(a, k.id());
-        plugin.send(p, "kit-bought", "%kit%", k.name(), "%price%", k.price() == 0 ? "&aFree" : k.currency().fmt(k.price()));
+        return items;
     }
 
-    private void stamp(Account a, String id) {
-        long now = System.currentTimeMillis();
-        a.kitCooldowns.put(id, now);
-        plugin.db.update("INSERT OR REPLACE INTO kit_cooldowns(uuid,kit,ts) VALUES(?,?,?)", a.id.toString(), id, now);
+    /** Charge + cooldown stamp in one transaction, then deliver; refund (and un-stamp) if delivery is impossible. */
+    public void purchase(Player p, Kit k, Runnable after) {
+        Account a = plugin.economy.get(p);
+        if (a == null) { after.run(); return; }
+        long left = cooldownLeft(a, k);
+        if (left > 0) { plugin.send(p, "kit-cooldown", "%time%", Text.duration(left)); after.run(); return; }
+        if (!Items.canFit(p, copy(k))) { plugin.send(p, "kit-no-space"); after.run(); return; }
+        if (a.dollars < k.price()) { plugin.send(p, "kit-no-funds", "%price%", Money.fmt(k.price()), "%balance%", Money.fmt(a.dollars)); after.run(); return; }
+        if (!plugin.economy.tryLock(a.id)) { plugin.send(p, "tx-busy"); after.run(); return; }
+
+        final long now = System.currentTimeMillis();
+        final String uid = a.id.toString();
+        final boolean stamp = k.cooldown() > 0;
+        List<Change> charge = k.price() > 0 ? List.of(new Change(a.id, -k.price(), null, "KIT")) : List.of();
+        plugin.economy.commit("KIT", charge, c -> {
+            if (stamp) Database.run(c, Sql.KIT_STAMP, uid, k.id(), now);
+            return true;
+        }, () -> { if (stamp) a.kitCooldowns.put(k.id(), now); }, ok -> {
+            if (!ok) { plugin.economy.unlock(a.id); plugin.send(p, "kit-no-funds", "%price%", Money.fmt(k.price()), "%balance%", Money.fmt(a.dollars)); after.run(); return; }
+            List<ItemStack> items = copy(k);
+            if (p.isOnline() && Items.canFit(p, items)) {
+                Items.give(p, items);
+                plugin.economy.unlock(a.id);
+                plugin.send(p, "kit-bought", "%kit%", k.name(), "%price%", Money.fmt(k.price()));
+                after.run();
+            } else {
+                plugin.getLogger().warning("Kit delivery failed for " + p.getName() + " (" + k.id() + "); refunding " + k.price());
+                List<Change> refund = k.price() > 0 ? List.of(new Change(a.id, k.price(), null, "KIT_REFUND")) : List.of();
+                plugin.economy.commit("KIT_REFUND", refund, c -> { if (stamp) Database.run(c, Sql.KIT_UNSTAMP, uid, k.id()); return true; },
+                        () -> { if (stamp) a.kitCooldowns.remove(k.id()); }, ok2 -> {
+                    if (!ok2) plugin.getLogger().severe("REFUND FAILED for " + p.getName() + ": owed $" + k.price() + " - fix manually with /moneyadmin give.");
+                    plugin.economy.unlock(a.id);
+                    plugin.send(p, "kit-refunded");
+                    after.run();
+                });
+            }
+        });
     }
 
     /** Free starter kit: given once, only to brand-new players, if enabled in config. */
@@ -107,10 +129,10 @@ public final class KitManager {
         Account a = plugin.economy.get(p);
         Kit k = kits.get(plugin.getConfig().getString("starter-kit.kit", "starter"));
         if (a == null || k == null || a.kitCooldowns.containsKey(STARTER_MARK)) return;
-        List<ItemStack> items = new ArrayList<>();
-        for (ItemStack it : k.items()) items.add(it.clone());
-        Items.give(p, items); // drops at feet if the inventory is somehow full
-        stamp(a, STARTER_MARK);
+        long now = System.currentTimeMillis();
+        a.kitCooldowns.put(STARTER_MARK, now);
+        plugin.db.update(Sql.KIT_STAMP, a.id.toString(), STARTER_MARK, now);
+        Items.give(p, copy(k)); // drops at feet if the inventory is somehow full
         plugin.send(p, "kit-starter", "%kit%", k.name());
     }
 }

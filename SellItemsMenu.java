@@ -4,6 +4,7 @@ import dev.knightsmp.mods.KnightPlugin;
 import dev.knightsmp.mods.market.MarketManager.Category;
 import dev.knightsmp.mods.market.MarketManager.Item;
 import dev.knightsmp.mods.util.Items;
+import dev.knightsmp.mods.util.Money;
 import dev.knightsmp.mods.util.Text;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -29,8 +30,8 @@ public final class SellItemsMenu extends PagedMenu<Item> {
     protected ItemStack render(Item it, int i) {
         long have = Items.count(player.getInventory(), it.material);
         List<String> lore = new ArrayList<>();
-        lore.add("&8Demand: " + (it.up ? "&a&lUP" : "&c&lDOWN"));
-        lore.add("&8Price: " + it.currency.fmt(it.price) + (it.bundle > 1 ? " &7per " + it.bundle : " &7each"));
+        lore.add("&8Demand: " + (it.up ? "&a&lUP &7(price x" + String.format(java.util.Locale.US, "%.2f", it.multiplier) + ")" : "&c&lDOWN &7(price x" + String.format(java.util.Locale.US, "%.2f", it.multiplier) + ")"));
+        lore.add("&8Price: " + Money.fmt(it.price) + (it.bundle > 1 ? " &7per " + it.bundle : " &7each"));
         lore.add("&8Stock: " + (it.stock > 0 ? "&f" + Text.num(it.stock) + " &7bundles" : "&cSOLD OUT"));
         lore.add("&8You have: &f" + Text.num(have));
         lore.add("&dClick to sell");
@@ -41,8 +42,7 @@ public final class SellItemsMenu extends PagedMenu<Item> {
 
     @Override
     protected void onClick(Item it, InventoryClickEvent e) {
-        plugin.market.sell(player, it, MODES[mode]);
-        rebuild();
+        plugin.market.sell(player, it, MODES[mode], this::rebuild);
     }
 
     @Override

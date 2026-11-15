@@ -3,7 +3,7 @@ package dev.knightsmp.mods.gui;
 import dev.knightsmp.mods.KnightPlugin;
 import dev.knightsmp.mods.bounty.BountyManager.Entry;
 import dev.knightsmp.mods.util.Items;
-import dev.knightsmp.mods.util.Text;
+import dev.knightsmp.mods.util.Money;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -29,15 +29,27 @@ public final class BountyMenu extends PagedMenu<Entry> {
         String color = switch (rank) { case 1 -> "&6&l"; case 2 -> "&f&l"; case 3 -> "&c&l"; default -> "&7"; };
         String tag = rank == 1 ? " &5&l★ WANTED #1" : rank <= 3 ? " &d★" : "";
         return Items.head(Bukkit.getOfflinePlayer(e.id()), color + e.name() + tag,
-                List.of("&8Rank: &f#" + rank, "&8Bounty: &d" + Text.num(e.bounty())), rank <= 3);
+                List.of("&8Rank: &f#" + rank, "&8Bounty: " + Money.fmt(e.bounty())), rank <= 3);
     }
 
     @Override protected void onClick(Entry e, InventoryClickEvent ev) {}
 
+    /** Re-reads the leaderboard for every player currently looking at a bounty menu (called whenever bounties change). */
+    public static void refreshAll(KnightPlugin plugin) {
+        boolean any = false;
+        for (Player p : Bukkit.getOnlinePlayers())
+            if (p.getOpenInventory().getTopInventory().getHolder() instanceof BountyMenu) { any = true; break; }
+        if (!any) return;
+        plugin.bounty.leaderboard(500, 0).thenAccept(list -> Bukkit.getScheduler().runTask(plugin, () -> {
+            for (Player p : Bukkit.getOnlinePlayers())
+                if (p.getOpenInventory().getTopInventory().getHolder() instanceof BountyMenu m) { m.entries = list; m.rebuild(); }
+        }));
+    }
+
     @Override
     protected void extra() {
         long mine = plugin.economy.get(player) == null ? 0 : plugin.economy.get(player).bounty;
-        set(4, Items.head(player, "&d" + player.getName(), List.of("&8Your bounty: &d" + Text.num(mine),
+        set(4, Items.head(player, "&d" + player.getName(), List.of("&8Your bounty: " + Money.fmt(mine),
                 "&7Kill players to raise it.", "&7Die in PvP and it resets."), false), null);
     }
 }

@@ -4,12 +4,15 @@ import dev.knightsmp.mods.bounty.BountyManager;
 import dev.knightsmp.mods.combat.CombatManager;
 import dev.knightsmp.mods.commands.Commands;
 import dev.knightsmp.mods.economy.EconomyManager;
+import dev.knightsmp.mods.fx.PaymentFx;
+import dev.knightsmp.mods.home.HomeManager;
+import dev.knightsmp.mods.hud.HudManager;
 import dev.knightsmp.mods.kits.KitManager;
 import dev.knightsmp.mods.listeners.Listeners;
 import dev.knightsmp.mods.market.MarketManager;
 import dev.knightsmp.mods.shop.ShopManager;
+import dev.knightsmp.mods.stats.StatsManager;
 import dev.knightsmp.mods.storage.Database;
-import dev.knightsmp.mods.teleport.TeleportManager;
 import dev.knightsmp.mods.util.Text;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
@@ -26,10 +29,13 @@ public final class KnightPlugin extends JavaPlugin {
     public EconomyManager economy;
     public BountyManager bounty;
     public CombatManager combat;
-    public TeleportManager teleport;
     public ShopManager shop;
     public KitManager kits;
     public MarketManager market;
+    public HomeManager home;
+    public HudManager hud;
+    public StatsManager stats;
+    public PaymentFx fx;
     private volatile boolean shuttingDown;
 
     @Override
@@ -47,13 +53,15 @@ public final class KnightPlugin extends JavaPlugin {
         }
         economy = new EconomyManager(this);
         combat = new CombatManager(this);
-        teleport = new TeleportManager(this);
+        home = new HomeManager(this);
+        hud = new HudManager(this);
+        stats = new StatsManager(this);
+        fx = new PaymentFx(this);
         bounty = new BountyManager(this);
         shop = new ShopManager(this);
         kits = new KitManager(this);
         market = new MarketManager(this);
 
-        teleport.loadSpawn();
         shop.load();
         kits.load();
         market.load();
@@ -65,11 +73,12 @@ public final class KnightPlugin extends JavaPlugin {
             if (c != null) { c.setExecutor(cmds); c.setTabCompleter(cmds); }
         }
         combat.start();
+        stats.start();
         market.start();
 
         // /reload or late enable: load accounts of players already online
         for (Player p : Bukkit.getOnlinePlayers()) {
-            try { economy.loadBlocking(p.getUniqueId(), p.getName()); bounty.onJoin(p); }
+            try { economy.loadBlocking(p.getUniqueId(), p.getName()); bounty.onJoin(p); hud.attach(p); stats.onJoin(p); }
             catch (Exception e) { p.kick(Text.c("&cKnightSMP could not load your data. Please rejoin.")); }
         }
         bounty.refreshRole();
@@ -80,9 +89,12 @@ public final class KnightPlugin extends JavaPlugin {
     public void onDisable() {
         shuttingDown = true;
         if (combat != null) combat.stop();
-        if (teleport != null) teleport.shutdown();
+        if (fx != null) fx.shutdown();
+        if (home != null) home.shutdown();
+        if (stats != null) stats.shutdown();     // saves playtime before the database closes
+        if (hud != null) hud.shutdown();
         if (bounty != null) bounty.shutdown();
-        if (economy != null) economy.saveAll();
+        if (economy != null) economy.shutdown(); // finishes any in-flight transaction before the database closes
         if (db != null) db.close();
     }
 
@@ -93,6 +105,7 @@ public final class KnightPlugin extends JavaPlugin {
         shop.load();
         kits.load();
         market.reloadDefinitions();
+        hud.reloadAll();
         bounty.refreshRole();
     }
 

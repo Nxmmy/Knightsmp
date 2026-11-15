@@ -1,0 +1,50 @@
+# Enchantment books. One book per enchantment per level is generated from the server's enchantment registry,
+# so every enchantment the server supports is sold. price(level) = base x (1 + per-level-factor x (level-1)).
+# Tiers by how the book is obtained: common (enchanting table / cheap villager trade) $12-30, uncommon $32-70,
+# rare (treasure / structure-only / mob-specific) $110-190, mending $450 (treasure only, the most sought-after book).
+per-level-factor: 0.9
+default-base: 120      # used (with a console warning) for any enchantment added by a newer game version
+prices:
+  protection: 15
+  projectile_protection: 15
+  feather_falling: 15
+  blast_protection: 18
+  fire_protection: 14
+  respiration: 18
+  aqua_affinity: 18
+  thorns: 24
+  depth_strider: 26
+  sharpness: 15
+  smite: 12
+  bane_of_arthropods: 12
+  knockback: 14
+  fire_aspect: 20
+  looting: 28
+  sweeping_edge: 24
+  efficiency: 15
+  unbreaking: 18
+  fortune: 45
+  silk_touch: 40
+  power: 15
+  punch: 14
+  flame: 16
+  infinity: 70
+  luck_of_the_sea: 20
+  lure: 14
+  loyalty: 18
+  riptide: 40
+  channeling: 35
+  impaling: 20
+  multishot: 32
+  quick_charge: 18
+  piercing: 14
+  binding_curse: 30
+  vanishing_curse: 30
+  soul_speed: 130
+  frost_walker: 120
+  swift_sneak: 190
+  mending: 450
+  density: 120
+  breach: 130
+  wind_burst: 160
+  lunge: 110

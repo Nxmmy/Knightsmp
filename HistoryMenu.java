@@ -1,7 +1,7 @@
 package dev.knightsmp.mods.gui;
 
 import dev.knightsmp.mods.KnightPlugin;
-import dev.knightsmp.mods.economy.Currency;
+import dev.knightsmp.mods.economy.EconomyManager;
 import dev.knightsmp.mods.economy.EconomyManager.Tx;
 import dev.knightsmp.mods.util.Items;
 import dev.knightsmp.mods.util.Text;
@@ -34,10 +34,10 @@ public final class HistoryMenu extends PagedMenu<Tx> {
 
     @Override
     protected ItemStack render(Tx t, int i) {
-        Currency c = Currency.valueOf(t.currency());
         boolean plus = t.delta() >= 0;
+        boolean legacy = !EconomyManager.CURRENCY_TAG.equals(t.currency()); // rows written before the Dollar update
         List<String> lore = new ArrayList<>();
-        lore.add("&8Amount: " + (plus ? "&a+" : "&c-") + c.fmt(Math.abs(t.delta())));
+        lore.add("&8Amount: " + (plus ? "&a+" : "&c-") + (legacy ? "&7" + Text.num(Math.abs(t.delta())) + " " + t.currency().toLowerCase() + " &8(old currency)" : "&a$" + Text.num(Math.abs(t.delta()))));
         if (t.other() != null) {
             OfflinePlayer op = Bukkit.getOfflinePlayer(UUID.fromString(t.other()));
             lore.add("&8Player: &f" + (op.getName() == null ? "Unknown" : op.getName()));
