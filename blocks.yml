@@ -1,6 +1,6 @@
 # Shop pricing rules. EVERY item the running server knows that is a block (and anything matched by a rule with item: true) is listed in the shop
 # automatically: the first matching rule gives its category, price per item (unit) and pack size (amount). Pack price = round(unit x amount), minimum $1 (unit 0 = free).
-# Items matching no rule fall back to the 'fallback' price (they are named in the console at startup so you can add a rule). Anything in shop.yml is skipped here.
+# Blocks matching no rule are not sold (fallback category is empty); set a category there to list them at the fallback price. Anything in shop.yml is skipped here.
 # Add or tune rules freely; regexes are matched against the full UPPER_CASE material name.
 exclude:
   - '^(AIR|CAVE_AIR|VOID_AIR|BEDROCK|BARRIER|LIGHT|STRUCTURE_BLOCK|STRUCTURE_VOID|JIGSAW|DEBUG_STICK|KNOWLEDGE_BOOK)$'
@@ -9,7 +9,7 @@ exclude:
   - '^INFESTED_.*$'
   - '^SUSPICIOUS_(SAND|GRAVEL)$'
   - '^LEGACY_.*$'
-fallback: {category: utility, unit: 1.5, amount: 8}
+fallback: {category: "", unit: 0, amount: 1}   # empty category = not sold
 rules:
   - {match: '^.*_ARMOR_TRIM_SMITHING_TEMPLATE$', category: combat, unit: 0, amount: 1, item: true}
   - {match: '^HEAVY_WEIGHTED_PRESSURE_PLATE$', category: redstone, unit: 7.812, amount: 1}
@@ -68,24 +68,7 @@ rules:
   - {match: '^RAW_COPPER_BLOCK$', category: metal, unit: 9, amount: 1}
   - {match: '^(WAXED_)?(EXPOSED_|WEATHERED_|OXIDIZED_)?(COPPER_BLOCK|COPPER|CUT_COPPER|CUT_COPPER_STAIRS|CUT_COPPER_SLAB|CHISELED_COPPER|COPPER_GRATE)$', category: metal, unit: 8, amount: 4}
   - {match: '^(WAXED_)?(EXPOSED_|WEATHERED_|OXIDIZED_)?COPPER_(DOOR|TRAPDOOR)$', category: metal, unit: 10, amount: 2}
-  - {match: '^(WAXED_)?(EXPOSED_|WEATHERED_|OXIDIZED_)?COPPER_(CHEST|GOLEM_STATUE|LANTERN|TORCH|CHAIN|BARS)$', category: utility, unit: 10, amount: 2}
   - {match: '^(AMETHYST_BLOCK|SMALL_AMETHYST_BUD|MEDIUM_AMETHYST_BUD|LARGE_AMETHYST_BUD|AMETHYST_CLUSTER)$', category: nature_terrain, unit: 12, amount: 4}
-  - {match: '^DRAGON_EGG$', category: utility, unit: 4000, amount: 1}
-  - {match: '^BEACON$', category: utility, unit: 2500, amount: 1}
-  - {match: '^CONDUIT$', category: utility, unit: 900, amount: 1}
-  - {match: '^HEAVY_CORE$', category: utility, unit: 1500, amount: 1}
-  - {match: '^WITHER_SKELETON_SKULL$', category: utility, unit: 350, amount: 1}
-  - {match: '^DRAGON_HEAD$', category: utility, unit: 900, amount: 1}
-  - {match: '^(CREEPER_HEAD|ZOMBIE_HEAD|PLAYER_HEAD|PIGLIN_HEAD|SKELETON_SKULL)$', category: utility, unit: 120, amount: 1}
-  - {match: '^ENCHANTING_TABLE$', category: utility, unit: 160, amount: 1}
-  - {match: '^ENDER_CHEST$', category: utility, unit: 90, amount: 1}
-  - {match: '^LODESTONE$', category: utility, unit: 260, amount: 1}
-  - {match: '^RESPAWN_ANCHOR$', category: utility, unit: 220, amount: 1}
-  - {match: '^(ANVIL)$', category: utility, unit: 90, amount: 1}
-  - {match: '^CHIPPED_ANVIL$', category: utility, unit: 60, amount: 1}
-  - {match: '^DAMAGED_ANVIL$', category: utility, unit: 40, amount: 1}
-  - {match: '^(.*)_FROGLIGHT$', category: utility, unit: 40, amount: 1}
-  - {match: '^SEA_LANTERN$', category: utility, unit: 14, amount: 2}
   - {match: '^STRIPPED_(OAK|SPRUCE|BIRCH|JUNGLE|ACACIA|DARK_OAK|MANGROVE|CHERRY|PALE_OAK)_(LOG|WOOD)$', category: nature_wood, unit: 0.7, amount: 16}
   - {match: '^(OAK|SPRUCE|BIRCH|JUNGLE|ACACIA|DARK_OAK|MANGROVE|CHERRY|PALE_OAK)_(LOG|WOOD)$', category: nature_wood, unit: 0.6, amount: 16}
   - {match: '^(STRIPPED_)?(CRIMSON|WARPED)_(STEM|HYPHAE)$', category: nature_wood, unit: 1.1, amount: 16}
@@ -152,9 +135,6 @@ rules:
   - {match: '^TURTLE_EGG$', category: nature_terrain, unit: 40, amount: 1}
   - {match: '^SNIFFER_EGG$', category: nature_terrain, unit: 300, amount: 1}
   - {match: '^(DARK_)?PRISMARINE(_BRICKS)?(_STAIRS|_SLAB|_WALL)?$', category: nature_terrain, unit: 8, amount: 4}
-  - {match: '^(BEE_NEST)$', category: utility, unit: 70, amount: 1}
-  - {match: '^(BEEHIVE)$', category: utility, unit: 18, amount: 1}
-  - {match: '^HONEYCOMB_BLOCK$', category: utility, unit: 8, amount: 2}
   - {match: '^(WHITE|ORANGE|MAGENTA|LIGHT_BLUE|YELLOW|LIME|PINK|GRAY|LIGHT_GRAY|CYAN|PURPLE|BLUE|BROWN|GREEN|RED|BLACK)_WOOL$', category: colored, unit: 1.2, amount: 16}
   - {match: '^(WHITE|ORANGE|MAGENTA|LIGHT_BLUE|YELLOW|LIME|PINK|GRAY|LIGHT_GRAY|CYAN|PURPLE|BLUE|BROWN|GREEN|RED|BLACK)_CARPET$', category: colored, unit: 0.4, amount: 16}
   - {match: '^(WHITE|ORANGE|MAGENTA|LIGHT_BLUE|YELLOW|LIME|PINK|GRAY|LIGHT_GRAY|CYAN|PURPLE|BLUE|BROWN|GREEN|RED|BLACK)_CONCRETE$', category: colored, unit: 0.6, amount: 32}
@@ -191,39 +171,3 @@ rules:
   - {match: '^(BRICKS|BRICK_STAIRS|BRICK_SLAB|BRICK_WALL)$', category: stone, unit: 0.6, amount: 16}
   - {match: '^(MOSSY_|CRACKED_|CHISELED_)?(STONE_BRICK|DEEPSLATE_BRICK|DEEPSLATE_TILE|TUFF_BRICK|MUD_BRICK)S?(_STAIRS|_SLAB|_WALL)?$|^CHISELED_(DEEPSLATE|TUFF|STONE_BRICKS)$|^CRACKED_DEEPSLATE_(BRICKS|TILES)$', category: stone, unit: 0.5, amount: 32}
   - {match: '^(CUT_|CHISELED_|SMOOTH_)?(RED_)?SANDSTONE(_STAIRS|_SLAB|_WALL)?$', category: stone, unit: 0.5, amount: 32}
-  - {match: '^CRAFTING_TABLE$', category: utility, unit: 2, amount: 1}
-  - {match: '^CHEST$', category: utility, unit: 4, amount: 2}
-  - {match: '^BARREL$', category: utility, unit: 3, amount: 2}
-  - {match: '^BOOKSHELF$', category: utility, unit: 12, amount: 1}
-  - {match: '^CHISELED_BOOKSHELF$', category: utility, unit: 14, amount: 1}
-  - {match: '^LECTERN$', category: utility, unit: 10, amount: 1}
-  - {match: '^COMPOSTER$', category: utility, unit: 3, amount: 1}
-  - {match: '^LOOM$', category: utility, unit: 6, amount: 1}
-  - {match: '^CARTOGRAPHY_TABLE$', category: utility, unit: 6, amount: 1}
-  - {match: '^FLETCHING_TABLE$', category: utility, unit: 6, amount: 1}
-  - {match: '^SMITHING_TABLE$', category: utility, unit: 12, amount: 1}
-  - {match: '^GRINDSTONE$', category: utility, unit: 10, amount: 1}
-  - {match: '^STONECUTTER$', category: utility, unit: 12, amount: 1}
-  - {match: '^FURNACE$', category: utility, unit: 2, amount: 1}
-  - {match: '^BLAST_FURNACE$', category: utility, unit: 25, amount: 1}
-  - {match: '^SMOKER$', category: utility, unit: 8, amount: 1}
-  - {match: '^CAMPFIRE$', category: utility, unit: 4, amount: 1}
-  - {match: '^SOUL_CAMPFIRE$', category: utility, unit: 5, amount: 1}
-  - {match: '^CAULDRON$', category: utility, unit: 25, amount: 1}
-  - {match: '^BREWING_STAND$', category: utility, unit: 12, amount: 1}
-  - {match: '^BELL$', category: utility, unit: 25, amount: 1}
-  - {match: '^JUKEBOX$', category: utility, unit: 25, amount: 1}
-  - {match: '^LANTERN$', category: utility, unit: 8, amount: 2}
-  - {match: '^SOUL_LANTERN$', category: utility, unit: 9, amount: 2}
-  - {match: '^END_ROD$', category: utility, unit: 6, amount: 2}
-  - {match: '^FLOWER_POT$', category: utility, unit: 2, amount: 2}
-  - {match: '^DECORATED_POT$', category: utility, unit: 8, amount: 1}
-  - {match: '^JACK_O_LANTERN$', category: utility, unit: 4, amount: 2}
-  - {match: '^CARVED_PUMPKIN$', category: utility, unit: 3, amount: 2}
-  - {match: '^IRON_BARS$', category: utility, unit: 3, amount: 8}
-  - {match: '^SCAFFOLDING$', category: utility, unit: 1.5, amount: 8}
-  - {match: '^LADDER$', category: utility, unit: 0.3, amount: 16}
-  - {match: '^TORCH$', category: utility, unit: 0.3, amount: 16}
-  - {match: '^SOUL_TORCH$', category: utility, unit: 0.5, amount: 16}
-  - {match: '^(IRON_)?CHAIN$', category: utility, unit: 4, amount: 4}
-  - {match: '^IRON_(DOOR|TRAPDOOR)$', category: utility, unit: 12, amount: 1}

@@ -151,11 +151,11 @@ public final class ShopManager {
             } catch (Exception e) { plugin.getLogger().warning("blocks.yml: bad rule " + m + ": " + e.getMessage()); }
         }
         ConfigurationSection fb = y.getConfigurationSection("fallback");
-        String fbCat = fb == null ? "utility" : fb.getString("category", "utility");
+        String fbCat = fb == null ? "" : fb.getString("category", "");
         double fbUnit = fb == null ? 1.5 : fb.getDouble("unit", 1.5);
         int fbAmount = fb == null ? 8 : Math.max(1, fb.getInt("amount", 8));
 
-        int added = 0, fallback = 0, skipped = 0, soldSkipped = 0;
+        int added = 0, fallback = 0, skipped = 0, soldSkipped = 0, unlisted = 0;
         List<String> fallbackNames = new ArrayList<>();
         for (Material mat : Material.values()) {
             if (mat.isLegacy() || !mat.isItem()) continue;
@@ -170,7 +170,10 @@ public final class ShopManager {
             }
             String cat; double unit; int amount;
             if (hit != null) { cat = hit.category(); unit = hit.unit(); amount = hit.amount(); }
-            else if (mat.isBlock()) { cat = fbCat; unit = fbUnit; amount = fbAmount; fallback++; fallbackNames.add(name); }
+            else if (mat.isBlock()) {
+                if (fbCat.isBlank()) { unlisted++; continue; }     // no catch-all category: unmatched blocks are not sold
+                cat = fbCat; unit = fbUnit; amount = fbAmount; fallback++; fallbackNames.add(name);
+            }
             else continue;
             if (dedupe.contains(cat) && sold.contains(mat)) { soldSkipped++; continue; }   // already in /sell: not offered here
             List<ShopItem> list = items.get(cat);
@@ -184,7 +187,7 @@ public final class ShopManager {
             int from = Math.min(curated.getOrDefault(e.getKey(), 0), l.size());
             l.subList(from, l.size()).sort((a, b) -> a.label().compareTo(b.label()));   // curated items keep their listed order
         }
-        plugin.getLogger().info("blocks.yml: " + added + " items priced by rules (" + skipped + " unobtainable excluded, " + soldSkipped + " left out because /sell already buys them, " + fallback + " used the fallback price).");
+        plugin.getLogger().info("blocks.yml: " + added + " items priced by rules (" + skipped + " unobtainable excluded, " + soldSkipped + " left out because /sell already buys them, " + unlisted + " blocks have no shop rule and are not sold, " + fallback + " used the fallback price).");
         if (!fallbackNames.isEmpty()) plugin.getLogger().info("Fallback-priced (add a rule in blocks.yml to tune): " + String.join(", ", fallbackNames.subList(0, Math.min(40, fallbackNames.size()))) + (fallbackNames.size() > 40 ? " ..." : ""));
     }
 

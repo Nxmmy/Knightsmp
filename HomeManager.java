@@ -4,17 +4,11 @@ import dev.knightsmp.mods.KnightPlugin;
 import dev.knightsmp.mods.economy.Account;
 import dev.knightsmp.mods.storage.Database;
 import dev.knightsmp.mods.storage.Sql;
-import dev.knightsmp.mods.util.Text;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerTeleportEvent;
-import org.bukkit.scheduler.BukkitTask;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
 
 /** /sethome /home /deletehome - one saved home per player, stored in SQLite. (There is no random teleport.) */
 public final class HomeManager {
@@ -26,10 +20,8 @@ public final class HomeManager {
             return w == null ? null : new Location(w, x, y, z, yaw, pitch);
         }
     }
-    private static final class Pending { BukkitTask task; Location start; int left; }
 
     private final KnightPlugin plugin;
-    private final Map<UUID, Pending> pending = new HashMap<>();   // server thread only
 
     public HomeManager(KnightPlugin plugin) { this.plugin = plugin; }
 
@@ -79,25 +71,11 @@ public final class HomeManager {
         if (a.home == null) { plugin.send(p, "home-none"); return; }
         Location dest = a.home.toLocation();
         if (dest == null) { plugin.send(p, "home-world"); return; }
-        if (plugin.combat.inCombat(p) && plugin.getConfig().getBoolean("home.block-in-combat", true)) { plugin.send(p, "home-combat"); return; }
-        if (pending.containsKey(p.getUniqueId())) { plugin.send(p, "home-busy"); return; }
-
+        boolean blockInCombat = plugin.getConfig().getBoolean("home.block-in-combat", true);
+        if (blockInCombat && plugin.combat.inCombat(p)) { plugin.send(p, "home-combat"); return; }
+        if (plugin.countdown.isPending(p)) { plugin.send(p, "home-busy"); return; }
         int delay = p.hasPermission("knightsmp.bypass.delay") ? 0 : Math.max(0, plugin.getConfig().getInt("home.delay-seconds", 5));
-        if (delay == 0) { go(p, dest); return; }
-        Pending pd = new Pending();
-        pd.start = p.getLocation().clone();
-        pd.left = delay;
-        pending.put(p.getUniqueId(), pd);
-        plugin.send(p, "home-countdown", "%seconds%", delay);
-        final boolean cancelOnMove = plugin.getConfig().getBoolean("home.cancel-on-move", true);
-        pd.task = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
-            if (!p.isOnline()) { cancel(p, null); return; }
-            if (plugin.combat.inCombat(p) && plugin.getConfig().getBoolean("home.block-in-combat", true)) { cancel(p, "home-cancel-combat"); return; }
-            if (cancelOnMove && moved(p, pd.start)) { cancel(p, "home-cancel-move"); return; }
-            pd.left--;
-            if (pd.left <= 0) { cancel(p, null); go(p, dest); }
-            else p.sendActionBar(Text.c(plugin.raw("home-countdown-bar", "%seconds%", pd.left)));
-        }, 20L, 20L);
+        plugin.countdown.start(p, "home", delay, plugin.getConfig().getBoolean("home.cancel-on-move", true), blockInCombat, () -> go(p, dest));
     }
 
     private void go(Player p, Location dest) {
@@ -105,20 +83,4 @@ public final class HomeManager {
         p.teleportAsync(dest, PlayerTeleportEvent.TeleportCause.PLUGIN).thenAccept(ok ->
                 Bukkit.getScheduler().runTask(plugin, () -> plugin.send(p, Boolean.TRUE.equals(ok) ? "home-done" : "home-failed")));
     }
-
-    private boolean moved(Player p, Location s) {
-        Location n = p.getLocation();
-        return n.getWorld() != s.getWorld() || n.getBlockX() != s.getBlockX() || n.getBlockY() != s.getBlockY() || n.getBlockZ() != s.getBlockZ();
-    }
-
-    /** Stops a pending /home countdown; reasonKey (nullable) is sent to the player. */
-    public void cancel(Player p, String reasonKey) {
-        Pending pd = pending.remove(p.getUniqueId());
-        if (pd == null) return;
-        if (pd.task != null) pd.task.cancel();
-        if (reasonKey != null) plugin.send(p, reasonKey);
-    }
-    public boolean isPending(Player p) { return pending.containsKey(p.getUniqueId()); }
-    public void onQuit(Player p) { cancel(p, null); }
-    public void shutdown() { for (Pending pd : pending.values()) if (pd.task != null) pd.task.cancel(); pending.clear(); }
 }

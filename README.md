@@ -1,12 +1,21 @@
-# Mods For KnightSMP 2.0.0
+# Mods For KnightSMP 2.1.0
 
 Anarchy-style Paper plugin: **Dollar ($) economy**, /shop (blocks, nature, redstone, combat, tools, food, enchantment books, potions), /shopkits, /sell with a 24-hour dynamic market,
-bounties with a WANTED #1 role, a Money/Bounty/Kills sidebar, **/stat**, **/pay with a receiver animation**, `/home`, and combat logging. Server-side only; Java and Bedrock (Geyser/Floodgate) use the same plain chest menus.
-There is **no random teleport** and no /tpa, /spawn, /back (vanilla `/tp` is untouched).
+bounties with a WANTED #1 role, a Money/Bounty/Kills sidebar, **/stat**, **/pay with a receiver animation**, **/settings**, **/reset** (OP only), `/home`, **/tps**, and combat logging. Server-side only; Java and Bedrock (Geyser/Floodgate) use the same plain chest menus.
+The only teleports are `/home` and `/tps` - there is no random teleport and no /tpa, /spawn, /back (vanilla `/tp` is untouched).
 
-Requirements: Paper 26.3, Java 25. Optional: ViaVersion, ViaBackwards, Geyser-Spigot, Floodgate. Build output: `ModsForKnightSMP-2.0.0.jar`.
+Requirements: Paper 26.3, Java 25. Optional: ViaVersion, ViaBackwards, Geyser-Spigot, Floodgate. Build output: `ModsForKnightSMP-2.1.0.jar`.
 
-## What's new in 2.0.0
+## What's new in 2.1.0
+* **/settings** (every player): a dark chest menu with one icon per setting plus a green/red state tile. Saved per player UUID (table `player_settings`), re-applied at every login. Built from a registry, so a new setting is one small class. Included: **Mob Spawn** and **Payment Popup** (same preference as /payanim).
+  * **Mob Spawn is per player, not server-wide.** It uses Paper's `Player#setAffectsSpawning`: *Closed* = you stop attracting natural mob spawns. Limits: mobs still spawn near you if another player nearby has it Open, existing mobs stay, and spawners/eggs/commands are unaffected.
+* **/tps**: teleports to the fixed point **791, 73, 609** (config `tps.x/y/z`, world `tps.world`, default main world). Same rules as /home: not in combat, 5-second stand-still countdown (cancelled by moving/damage), refuses (and tells the player) if the spot is blocked, in lava or the world is unavailable. Typing `/tps` in game runs this instead of Paper's TPS readout (`tps.override-paper-tps`; console and `/mspt` still show TPS).
+* **/reset** (operators only): menu with **Everyone** first, then every known player (online or offline) with heads, paginated; a confirmation screen names the target; Cancel changes nothing. Resets **money and bounty only** (kills, deaths, streaks, playtime, settings, homes, kit cooldowns are untouched), as one database transaction with history rows and an audit entry (`admin_log` table + console line). Authorisation is the player's real OP status, checked when the command runs, on every click and when confirming. Money resets to `reset.money-to` (default 0, so it never re-grants the $150 starting balance).
+* **Shop**: the category "Blocks: Utility & Decor" and all its listings are gone; the Redstone category is now named **"Redstone: Component"** (recipe-derived prices; nothing /sell already buys; Redstone Dust is not repeated there - it stays in the Ores shop at the exact $35 per 16).
+* **/stat**: unchanged in scope; a death is now counted once per respawn.
+* New option `gui.fill-empty-slots` (default true) to leave unused menu slots empty.
+
+## Earlier in 2.0.0
 * **/stat [player]** - dark GUI with money, kills, deaths, K/D, playtime, kill streak (current/best), bounty, richest/kills rank, and trading totals (earned selling, spent in shops, payments sent/received). Everything is read from saved data; deaths, streaks and playtime are newly tracked and stored in SQLite.
 * **/pay <player> <amount>** (already atomic) now plays a **payment animation** for the receiver (below). `/payanim [on/off]` lets a player turn the popup off.
 * **Blocks and Redstone shops cleaned up**: unobtainable/admin blocks (command blocks, bedrock, barriers, structure blocks, jigsaw, end portal frames, spawners, infested blocks...) are excluded, only real blocks are listed (no ingots, gems or dusts), and **anything /sell already buys is not repeated** (the /sell list in market.yml is read when the shop loads).
@@ -23,13 +32,16 @@ Limitation: vanilla clients cannot draw custom images or big graphics without a 
 |---|---|
 | `/money` `/money <player>` `/pay <player> <amount>` `/baltop` `/payanim [on/off]` | Balance, wallet menu, payments, richest players, payment popup on/off |
 | `/stat [player]` | Statistics menu |
+| `/settings` | Your personal settings (Mob Spawn, Payment Popup) |
+| `/tps` | Teleport to 791, 73, 609 |
+| `/reset` | OP only: reset money and bounty (everyone or one player) |
 | `/shop` `/shopkits` `/sell` `/bounty` | Shop, kit shop, market, bounty leaderboard |
 | `/sethome` `/home` `/deletehome` | Home (one per player) |
 | `/moneyadmin give/take/set <player> <amount>`, `/moneyadmin migrate [confirm]` | Admin money / old-currency migration |
 | `/knight reload`, `setbounty`, `resetbounty`, `market reload/refresh` | Admin |
 
 ## Database changes
-New columns on `accounts` (added automatically, after a `.bak` backup, nothing is deleted): `dollars`, `migrated`, `kills`, `deaths`, `streak`, `best_streak`, `playtime`, `anim_off`. Existing players keep every balance, bounty, home and Iron/Diamond value; new statistics start at 0 (there is no earlier history to count). Convert old Iron/Diamond balances with `/moneyadmin migrate` after setting `migration.iron-rate` / `diamond-rate`.
+New tables `player_settings` and `admin_log` (created automatically; nothing existing is touched). New columns on `accounts` (added automatically, after a `.bak` backup, nothing is deleted): `dollars`, `migrated`, `kills`, `deaths`, `streak`, `best_streak`, `playtime`, `anim_off`. Existing players keep every balance, bounty, home and Iron/Diamond value; new statistics start at 0 (there is no earlier history to count). Convert old Iron/Diamond balances with `/moneyadmin migrate` after setting `migration.iron-rate` / `diamond-rate`.
 
 ## HUD limitation (left side)
 Vanilla Minecraft draws the server sidebar on the **right** edge of the screen, and Geyser maps it to Bedrock's right-hand sidebar. Placing it on the left needs a client mod or a custom resource pack, so the closest compatible option is used: the standard sidebar (score numbers hidden). It needs no client mods, works for Java and Bedrock, and is event-driven (no repeating task).
@@ -54,7 +66,6 @@ The plugin adds missing columns (`dollars`, `migrated`, `kills`) after writing a
 
 ## Notes
 * The Nature shop still sells dirt, sand, logs and leaves that /sell also buys (the duplicate rule was written for Blocks and Redstone). To remove those too, add `exclude-sold: true` to the `nature_*` categories in shop.yml.
-* Redstone Dust is hand-listed in the Redstone shop on request even though /sell buys it; it is the one deliberate overlap.
 
 ## Tests (run by hand; they do not replace testing on a real server)
 * `python3 sql_tests.py Sql.java` - the plugin's real SQL on SQLite (transactions, sell/buy/refund, no negative balances, bounty single-claim, kills, homes, restart persistence, upgrade/migration, starting balance once).

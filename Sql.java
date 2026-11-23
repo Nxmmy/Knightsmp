@@ -13,6 +13,8 @@ public final class Sql {
     public static final String ADD_BEST_STREAK = "ALTER TABLE accounts ADD COLUMN best_streak INTEGER NOT NULL DEFAULT 0";
     public static final String ADD_PLAYTIME = "ALTER TABLE accounts ADD COLUMN playtime INTEGER NOT NULL DEFAULT 0 CHECK(playtime>=0)";
     public static final String ADD_ANIM_OFF = "ALTER TABLE accounts ADD COLUMN anim_off INTEGER NOT NULL DEFAULT 0";
+    public static final String CREATE_SETTINGS = "CREATE TABLE IF NOT EXISTS player_settings (uuid TEXT NOT NULL, key TEXT NOT NULL, value TEXT NOT NULL, PRIMARY KEY(uuid, key))";
+    public static final String CREATE_ADMIN_LOG = "CREATE TABLE IF NOT EXISTS admin_log (id INTEGER PRIMARY KEY AUTOINCREMENT, ts INTEGER NOT NULL, admin_uuid TEXT, admin_name TEXT NOT NULL, action TEXT NOT NULL, target TEXT NOT NULL, detail TEXT)";
     public static final String CREATE_HOMES = "CREATE TABLE IF NOT EXISTS homes (uuid TEXT PRIMARY KEY, world TEXT NOT NULL, x REAL, y REAL, z REAL, yaw REAL, pitch REAL)";
     public static final String CREATE_TX = "CREATE TABLE IF NOT EXISTS tx (id INTEGER PRIMARY KEY AUTOINCREMENT, ts INTEGER NOT NULL, uuid TEXT NOT NULL, other TEXT, currency TEXT NOT NULL, delta INTEGER NOT NULL, type TEXT NOT NULL)";
     public static final String CREATE_TX_INDEX = "CREATE INDEX IF NOT EXISTS idx_tx_uuid ON tx(uuid, id)";
@@ -56,4 +58,15 @@ public final class Sql {
     public static final String MIG_PREVIEW = "SELECT COUNT(*), COALESCE(SUM(iron),0), COALESCE(SUM(diamonds),0) FROM accounts WHERE migrated=0 AND (iron>0 OR diamonds>0)";
     public static final String MIG_SELECT = "SELECT uuid,iron,diamonds FROM accounts WHERE migrated=0 AND (iron>0 OR diamonds>0)";
     public static final String MIG_APPLY = "UPDATE accounts SET dollars=dollars+?, migrated=1 WHERE uuid=? AND migrated=0";
+
+    public static final String SETTING_SELECT = "SELECT key,value FROM player_settings WHERE uuid=?";
+    public static final String SETTING_SET = "INSERT OR REPLACE INTO player_settings(uuid,key,value) VALUES(?,?,?)";
+
+    // /reset: only money and bounty are touched. Params: (ts, moneyTo, moneyTo) then (moneyTo) for the history rows and the update.
+    public static final String RESET_TX_ALL = "INSERT INTO tx(ts,uuid,other,currency,delta,type) SELECT ?, uuid, NULL, 'USD', ? - dollars, 'ADMIN_RESET' FROM accounts WHERE dollars <> ?";
+    public static final String RESET_ALL = "UPDATE accounts SET dollars=?, bounty=0";
+    public static final String RESET_TX_ONE = "INSERT INTO tx(ts,uuid,other,currency,delta,type) SELECT ?, uuid, NULL, 'USD', ? - dollars, 'ADMIN_RESET' FROM accounts WHERE uuid=? AND dollars <> ?";
+    public static final String RESET_ONE = "UPDATE accounts SET dollars=?, bounty=0 WHERE uuid=?";
+    public static final String RESET_LIST = "SELECT uuid,name,dollars,bounty FROM accounts ORDER BY name COLLATE NOCASE LIMIT ?";
+    public static final String ADMIN_LOG_INSERT = "INSERT INTO admin_log(ts,admin_uuid,admin_name,action,target,detail) VALUES(?,?,?,?,?,?)";
 }

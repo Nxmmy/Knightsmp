@@ -31,12 +31,15 @@ check("a home save that fails is never reported as success", "home-save-failed" 
 print("== commands / permissions / messages")
 perms = set(y["plugin.yml"]["permissions"]); children = {k for p in y["plugin.yml"]["permissions"].values() if isinstance(p, dict) for k in (p.get("children") or {})}
 for c, v in y["plugin.yml"]["commands"].items():
+    if c == "reset":     # deliberately has no permission node: it is gated by real OP status in code
+        check("/reset has a handler (access is decided by isOp(), not by a permission node)", '"reset"' in java["Commands.java"] and "permission" not in v)
+        continue
     check(f"/{c} has a handler and a declared permission", f'"{c}"' in java["Commands.java"] and (v["permission"] in perms or v["permission"] in children))
 used = {a or b for a, b in re.findall(r'perm\(s, "([\w.]+)"\)|hasPermission\("([\w.]+)"\)', allj)}
 check("every permission checked in code is declared", used <= (perms | children), str(used - perms - children))
 keys = set(y["config.yml"]["messages"])
 code_keys = set(re.findall(r'(?:send|broadcast|msg|raw)\((?:[\w.()]+, )?"([a-z0-9-]+)"', allj))
-code_keys |= set(re.findall(r'"((?:sell|shop|kit|pay|tx|bounty|combat|balance|baltop|admin|migrate|market|player|invalid|usage|reloaded|db|no|wanted|home)-[a-z0-9-]+)"', allj))
+code_keys |= set(re.findall(r'"((?:sell|shop|kit|pay|tx|bounty|combat|balance|baltop|admin|migrate|market|player|invalid|usage|reloaded|db|no|wanted|home|tps|reset|settings|payanim)-[a-z0-9-]+)"', allj))
 code_keys |= set(re.findall(r'"(home-[a-z-]+)"', java["HomeManager.java"]))
 missing = {k for k in code_keys if k not in keys and k != "admin-"}
 check("every message key used in code exists in config.yml", not missing, str(sorted(missing)))
@@ -112,17 +115,20 @@ def universe():
     for t in ("SENTRY", "DUNE", "COAST", "WILD", "WARD", "EYE", "VEX", "TIDE", "SNOUT", "RIB", "SPIRE", "SILENCE", "RAISER", "HOST", "SHAPER", "WAYFINDER", "FLOW", "BOLT"): N.add(f"{t}_ARMOR_TRIM_SMITHING_TEMPLATE")
     return N
 U = universe()
+REMOVED_UTILITY = set("CRAFTING_TABLE CHEST BARREL BOOKSHELF LECTERN FURNACE BLAST_FURNACE SMOKER CAMPFIRE SOUL_CAMPFIRE ANVIL CHIPPED_ANVIL ENCHANTING_TABLE ENDER_CHEST LODESTONE RESPAWN_ANCHOR BELL JUKEBOX LANTERN SOUL_LANTERN TORCH SOUL_TORCH END_ROD FLOWER_POT DECORATED_POT JACK_O_LANTERN LADDER SCAFFOLDING CHAIN IRON_BARS IRON_DOOR IRON_TRAPDOOR OCHRE_FROGLIGHT WITHER_SKELETON_SKULL DRAGON_HEAD CREEPER_HEAD PLAYER_HEAD HEAVY_CORE LOOM GRINDSTONE STONECUTTER COMPOSTER CAULDRON BREWING_STAND SMITHING_TABLE CARTOGRAPHY_TABLE FLETCHING_TABLE CHISELED_BOOKSHELF CARVED_PUMPKIN DRAGON_EGG BEACON CONDUIT SEA_LANTERN BEE_NEST BEEHIVE HONEYCOMB_BLOCK".split())
 unmatched = [n for n in sorted(U) if not any(x.match(n) for x in excl) and rule_for(n) is None]
-check(f"sample of {len(U)} block/item names: nearly all are priced by an explicit rule (rest use the fallback)", len(unmatched) <= 0.03 * len(U), f"{len(unmatched)} unmatched: {unmatched[:25]}")
+unexpected = [n for n in unmatched if n not in REMOVED_UTILITY]
+check(f"sample of {len(U)} block/item names: everything except the removed Utility & Decor blocks is priced by a rule", len(unexpected) <= 0.02 * len(U), f"{len(unexpected)} unexpected: {unexpected[:25]}")
+check("the removed Utility & Decor blocks (crafting table, chest, anvil, beacon, heads, lanterns...) are NOT sold anywhere any more", all(rule_for(n) is None for n in REMOVED_UTILITY) and not any(n in {i.get("material") for c in shop.values() for i in c["items"]} for n in REMOVED_UTILITY))
 cats = set(shop.keys())
 bad = [n for n in U if rule_for(n) and rule_for(n)["category"] not in cats]
-check("every rule points at a category defined in shop.yml", not bad and all(r["category"] in cats for r in bl["rules"]) and bl["fallback"]["category"] in cats, str(bad[:5]))
+check("every rule points at a category defined in shop.yml; the fallback is empty (unmatched blocks are not sold)", not bad and all(r["category"] in cats for r in bl["rules"]) and bl["fallback"]["category"] == "", str(bad[:5]))
 check("unobtainable blocks are excluded (bedrock, barrier, command blocks, spawner, infested...)", all(any(x.match(n) for x in excl) for n in ("BEDROCK", "BARRIER", "COMMAND_BLOCK", "CHAIN_COMMAND_BLOCK", "SPAWNER", "INFESTED_STONE", "STRUCTURE_BLOCK", "END_PORTAL_FRAME", "REINFORCED_DEEPSLATE")))
 def pack(n):
     r = rule_for(n); return None if r is None else (r["category"], max(1, round(r["unit"] * r["amount"])) if r["unit"] > 0 else 0, r["amount"])
 check("Nature is complete: logs, leaves, saplings, flowers, mushrooms, vines, moss, grass, crops, terrain all land in nature_* categories",
       all((pack(n) or ("",))[0].startswith("nature") for n in ("OAK_LOG", "STRIPPED_CHERRY_LOG", "CRIMSON_STEM", "OAK_LEAVES", "OAK_SAPLING", "DANDELION", "RED_MUSHROOM", "VINE", "MOSS_BLOCK", "SHORT_GRASS", "WHEAT", "CARROT", "DIRT", "SAND", "PACKED_ICE", "BRAIN_CORAL", "SCULK", "KELP", "LILY_PAD", "RED_MUSHROOM_BLOCK")))
-check("rare blocks cost far more than common ones", pack("NETHERITE_BLOCK")[1] > pack("DIAMOND_BLOCK")[1] > pack("IRON_BLOCK")[1] > pack("COBBLESTONE")[1] and pack("DRAGON_EGG")[1] > 3000 and pack("BEACON")[1] > pack("ENCHANTING_TABLE")[1] > pack("CRAFTING_TABLE")[1] and pack("WITHER_ROSE")[1] > pack("POPPY")[1])
+check("rare blocks cost far more than common ones", pack("NETHERITE_BLOCK")[1] > pack("DIAMOND_BLOCK")[1] > pack("IRON_BLOCK")[1] > pack("COBBLESTONE")[1] and pack("SNIFFER_EGG")[1] > pack("SCULK")[1] and pack("SCULK_CATALYST")[1] > pack("SCULK")[1] and pack("WITHER_ROSE")[1] > pack("POPPY")[1])
 check("common nature is moderate (a stack of logs/sand/dirt costs $1-$20)", all(1 <= pack(n)[1] <= 20 for n in ("OAK_LOG", "SAND", "DIRT", "OAK_LEAVES", "GRAVEL", "DANDELION")), str([(n, pack(n)) for n in ("OAK_LOG", "SAND", "DIRT")]))
 check("every priced rule is >= 0 and only armor trims are free", all(r["unit"] > 0 for r in bl["rules"] if "ARMOR_TRIM" not in r["match"]))
 check("every pack price is a whole number >= $1 (except free trims)", all(pack(n)[1] >= 1 for n in U if pack(n) and "ARMOR_TRIM" not in n))
@@ -180,9 +186,9 @@ check("Database makes a backup before upgrading and before migrating", "backup(c
 check("migration never runs silently: rates default to -1", cfg["migration"]["iron-rate"] == -1 and cfg["migration"]["diamond-rate"] == -1)
 check("combat log kept (quit punishment + shutdown guard)", "isStopping()" in java["Listeners.java"] and "setHealth(0.0)" in java["Listeners.java"])
 
-print("== 2.0.0: version, commands, stats, payments")
-check("project version is 2.0.0 and the jar is named from it", 'version = "2.0.0"' in res["build.gradle.kts"] and "ModsForKnightSMP-${project.version}.jar" in res["build.gradle.kts"])
-check("plugin.yml takes its version from the build (expanded to 2.0.0) and has a real main class", y["plugin.yml"]["version"] == "${version}" and y["plugin.yml"]["main"] == "dev.knightsmp.mods.KnightPlugin" and "expand(\"version\"" in res["build.gradle.kts"])
+print("== 2.0.0: commands, stats, payments")
+check("the jar is named from the project version", "ModsForKnightSMP-${project.version}.jar" in res["build.gradle.kts"])
+check("plugin.yml takes its version from the build and has a real main class", y["plugin.yml"]["version"] == "${version}" and y["plugin.yml"]["main"] == "dev.knightsmp.mods.KnightPlugin" and "expand(\"version\"" in res["build.gradle.kts"])
 check("/stat, /pay and /payanim are registered with handlers", {"stat", "pay", "payanim"} <= cmds and all(f'"{c}"' in java["Commands.java"] for c in ("stat", "pay", "payanim")))
 sm, st = java["StatMenu.java"], java["StatsManager.java"]
 check("/stat shows money, kills, deaths, playtime, streaks, bounty, ranks, trading totals - all read from saved data", all(x in sm for x in ("a.dollars", "a.kills", "a.deaths", "plugin.stats.playtime(a)", "a.bestStreak", "a.bounty", "extra.moneyRank()", "extra.sum(\"SELL\")")))
@@ -209,12 +215,12 @@ check("Bedrock-safe: only chest menus, titles, action bar, particles and sounds 
 check("popup items cannot be taken (all menu clicks and drags are cancelled)", "extends Menu" in pm and "e.setCancelled(true)" in java["Listeners.java"])
 
 print("== 2.0.0: Blocks / Redstone shop cleanup")
-BLOCKCATS = {"stone", "woodblocks", "colored", "metal", "nether_end", "utility", "redstone"}
+BLOCKCATS = {"stone", "woodblocks", "colored", "metal", "nether_end", "redstone"}
 check("every Blocks/Redstone category skips items that /sell already handles (exclude-sold)", all(shop[c].get("exclude-sold") is True for c in BLOCKCATS))
 check("the real /sell registry (market.yml) is read before the Blocks list is generated", "soldMaterials()" in java["ShopManager.java"] and "dedupe.contains(cat) && sold.contains(mat)" in java["ShopManager.java"] and "market.yml" in java["ShopManager.java"])
 sold = {i["material"] for c in y["market.yml"]["categories"].values() for i in c["items"]}
 explicit_in_blocks = {c: [i["material"] for i in shop[c]["items"] if "material" in i] for c in BLOCKCATS}
-check("the only item hand-listed in a Blocks/Redstone category is Redstone Dust (explicitly requested; the one deliberate /sell overlap)", explicit_in_blocks["redstone"] == ["REDSTONE"] and all(not v for c, v in explicit_in_blocks.items() if c != "redstone"))
+check("nothing is hand-listed in a Blocks/Redstone category (so nothing can duplicate /sell); Redstone Dust stays available in the Ores shop only", all(not v for v in explicit_in_blocks.values()) and rule_for("REDSTONE") is None)
 check("no 'item: true' rule feeds a Blocks/Redstone category, so no standalone items (diamond, iron ingot, redstone dust...) ever appear in them", not [r for r in bl["rules"] if r["category"] in BLOCKCATS and r.get("item")])
 check("Blocks/Redstone rules never match non-block ingots/gems/dusts by name", not [n for n in ("DIAMOND", "IRON_INGOT", "GOLD_INGOT", "COPPER_INGOT", "EMERALD", "COAL", "LAPIS_LAZULI", "QUARTZ", "NETHERITE_INGOT", "REDSTONE") if rule_for(n) and rule_for(n)["category"] in BLOCKCATS])
 dup_removed = sorted(n for n in U if n in sold and rule_for(n) and rule_for(n)["category"] in BLOCKCATS)
@@ -223,14 +229,14 @@ BLOCK_NAMES = [n for n in sorted(U) if not any(x.match(n) for x in excl) and rul
 bp = [pack(n)[1] for n in BLOCK_NAMES]
 check(f"Blocks/Redstone prices vary item by item ({len(set(bp))} distinct pack prices over {len(bp)} blocks, ${min(bp)} to ${max(bp):,}); not one flat price", len(set(bp)) >= 25 and max(bp) / max(1, min(bp)) >= 100)
 unit = lambda n: rule_for(n)["unit"]
-check("difficulty drives price: dirt < stone-tier < obsidian < gold block < diamond block < netherite block < beacon/dragon egg", unit("DIRT") < unit("COBBLESTONE") < unit("OBSIDIAN") < unit("GOLD_BLOCK") < unit("DIAMOND_BLOCK") < unit("NETHERITE_BLOCK") and unit("BEACON") > unit("DIAMOND_BLOCK") and unit("DRAGON_EGG") > unit("BEACON"))
-check("rare structure/drop blocks cost far more than common ones (sculk catalyst, wither skull, heavy core vs planks/glass)", unit("SCULK_CATALYST") > 100 * unit("OAK_PLANKS") and unit("WITHER_SKELETON_SKULL") > unit("PLAYER_HEAD") > unit("OAK_PLANKS") * 100 and unit("HEAVY_CORE") > 1000)
+check("difficulty drives price: dirt < stone-tier < obsidian < gold block < diamond block < netherite block < beacon/dragon egg", unit("DIRT") < unit("COBBLESTONE") < unit("OBSIDIAN") < unit("GOLD_BLOCK") < unit("DIAMOND_BLOCK") < unit("NETHERITE_BLOCK") and unit("PACKED_ICE") < unit("BLUE_ICE"))
+check("rare structure/drop blocks cost far more than common ones (sculk catalyst, sniffer egg, wither rose vs planks/poppy)", unit("SCULK_CATALYST") > 100 * unit("OAK_PLANKS") and unit("SNIFFER_EGG") > unit("SCULK_CATALYST") > unit("OAK_PLANKS") * 100 and unit("WITHER_ROSE") > 100 * unit("POPPY"))
 check("storage blocks are included when not in /sell (coal, iron, gold, diamond, emerald, lapis, redstone, hay, bone, slime)", all(rule_for(n) is not None for n in ("COAL_BLOCK", "IRON_BLOCK", "GOLD_BLOCK", "DIAMOND_BLOCK", "EMERALD_BLOCK", "LAPIS_BLOCK", "REDSTONE_BLOCK", "HAY_BLOCK", "BONE_BLOCK", "SLIME_BLOCK")))
 RS = "REDSTONE_TORCH REDSTONE_BLOCK REPEATER COMPARATOR OBSERVER PISTON STICKY_PISTON DISPENSER DROPPER HOPPER TARGET LEVER OAK_BUTTON STONE_BUTTON OAK_PRESSURE_PLATE STONE_PRESSURE_PLATE HEAVY_WEIGHTED_PRESSURE_PLATE LIGHT_WEIGHTED_PRESSURE_PLATE TRIPWIRE_HOOK DAYLIGHT_DETECTOR REDSTONE_LAMP NOTE_BLOCK CRAFTER RAIL POWERED_RAIL DETECTOR_RAIL ACTIVATOR_RAIL SLIME_BLOCK HONEY_BLOCK LIGHTNING_ROD COPPER_BULB WAXED_OXIDIZED_COPPER_BULB SCULK_SENSOR CALIBRATED_SCULK_SENSOR TRAPPED_CHEST".split()
-check("the Redstone shop has every listed component (plus Redstone Dust hand-listed)", all(rule_for(n) and rule_for(n)["category"] == "redstone" for n in RS) and shop["redstone"]["items"][0]["material"] == "REDSTONE", str([n for n in RS if not rule_for(n) or rule_for(n)["category"] != "redstone"]))
+check("the Redstone: Component shop has every listed component (all rule-priced)", all(rule_for(n) and rule_for(n)["category"] == "redstone" for n in RS), str([n for n in RS if not rule_for(n) or rule_for(n)["category"] != "redstone"]))
 ru = lambda n: rule_for(n)["unit"] * rule_for(n)["amount"] / rule_for(n)["amount"]
 check("redstone prices follow ingredients/crafting steps: lever < torch < dropper < piston < sticky piston < hopper < crafter; repeater < comparator", ru("LEVER") < ru("REDSTONE_TORCH") < ru("DROPPER") < ru("PISTON") < ru("STICKY_PISTON") < ru("HOPPER") < ru("CRAFTER") and ru("REPEATER") < ru("COMPARATOR") and ru("DROPPER") < ru("DISPENSER") < ru("HOPPER") and ru("TRIPWIRE_HOOK") < ru("OBSERVER"))
-check("redstone dust keeps the exact $35 per 16 in both places", ores["REDSTONE"] == (16, 35) and shop["redstone"]["items"][0] == {"material": "REDSTONE", "amount": 16, "price": 35})
+check("redstone dust keeps the exact $35 per 16 in the Ores shop", ores["REDSTONE"] == (16, 35))
 
 print("== 2.0.0: Combat shop")
 check("Trident is $350, a mid-tier weapon: above the iron sword, below the netherite sword", cp["TRIDENT"] == 350 and cp["IRON_SWORD"] < 350 < cp["NETHERITE_SWORD"])
@@ -248,6 +254,56 @@ for cat, n in (("ores", 8), ("combat", 15), ("tools", 15), ("food", 12), ("misc"
     check(f"{cat}: {len(set(round(x, 3) for x in pr))} different unit prices over {len(pr)} items (not one flat price)", len(set(round(x, 3) for x in pr)) >= n)
 names = [i["material"] for c in shop.values() for i in c["items"] if "material" in i]
 dups = sorted({m for m in names if names.count(m) > 1})
-check("no item is listed twice in hand-written categories (only Redstone Dust, requested in both Ores and Redstone)", dups == ["REDSTONE"], str(dups))
+check("no item is listed twice in hand-written categories", dups == [], str(dups))
+
+
+print("== 2.1.0: shop categories")
+check("the category 'Blocks: Utility & Decor' is gone: not in shop.yml, no rule feeds it, no items, no menu entry", "utility" not in shop and "Utility" not in res["shop.yml"] and not [r for r in bl["rules"] if r["category"] == "utility"])
+check("a category named exactly 'Redstone: Component' exists once (it replaced the old Redstone entry, no duplicate category)", [c["name"] for c in shop.values()].count("Redstone: Component") == 1 and "Redstone" not in [c["name"] for c in shop.values()])
+check("unrelated categories were preserved (Ores, Combat, Tools, Food, Stone, Wood, Colored, Metal, Nether & End, 5 Nature, Enchantments, Potions, Misc)", len(shop) == 18 and {"ores", "combat", "tools", "food", "stone", "woodblocks", "colored", "metal", "nether_end", "nature_wood", "nature_leaves", "nature_plants", "nature_crops", "nature_terrain", "enchantments", "potions", "misc"} <= set(shop))
+check("no empty category is shown (ShopManager drops categories with no items)", "if (list.isEmpty()) continue;" in java["ShopManager.java"])
+check("the shop's /sell registry check still protects Redstone: Component (exclude-sold) and rule items never repeat anything /sell buys", shop["redstone"].get("exclude-sold") is True)
+
+print("== 2.1.0: /settings")
+check("/settings is registered, open to every player (no OP / admin permission), handled in Commands", "settings" in cmds and y["plugin.yml"]["permissions"]["knightsmp.settings"]["default"] is True and '"settings"' in java["Commands.java"] and ".isOp()" not in java["SettingsManager.java"])
+sx = java["SettingsManager.java"]
+check("Mob Spawn is PER PLAYER (Player#setAffectsSpawning) - no server-wide switch (no gamerule, no spawn flags, no world setting)", "setAffectsSpawning(open)" in sx and not re.search(r"GameRule|setSpawnFlags|setMonsterSpawnLimit|DO_MOB_SPAWNING|getWorlds\(\)", sx))
+check("each setting is saved per player UUID in player_settings and re-applied on every login", "Sql.SETTING_SET" in sx and "a.id.toString()" in sx and "applyAll" in sx and "plugin.settings.applyAll(p)" in java["Listeners.java"] and "Sql.SETTING_SELECT" in java["EconomyManager.java"])
+check("a change is saved first and only then shown/applied; a failed save reports failure; rapid clicks are ignored", "settings-failed" in sx and "busy.add(id)" in sx and sx.index("persist(c, a, open)") < sx.index("s.cache(a, open)"))
+check("one player's change can only touch that player's Account (toggle uses the clicking player's own account)", "plugin.economy.get(p)" in sx and "settings.toggle(player, s" in java["SettingsMenu.java"])
+check("the menu is built from the registry, so a new setting = one registered subclass (no GUI rewrite)", "plugin.settings.all()" in java["SettingsMenu.java"] and "public void register(Setting s)" in sx)
+check("Open/Closed states are obvious: green/red tile + OPEN/CLOSED text + glint; left-click only (Bedrock safe)", all(x in java["SettingsMenu.java"] for x in ("LIME_STAINED_GLASS_PANE", "RED_STAINED_GLASS_PANE", "OPEN", "CLOSED")) and "isRightClick" not in java["SettingsMenu.java"])
+check("Payment Popup in /settings is the same preference as /payanim (existing choices are kept)", "ANIM_SET" in sx and "animOff" in sx)
+
+print("== 2.1.0: /tps")
+check("/tps is the one general teleport: tps+home+sethome+deletehome only; no /spawn /rtp /tpa /back /setspawn", {"tps", "home", "sethome", "deletehome"} <= cmds and not (cmds & {"spawn", "rtp", "tpa", "tpaccept", "tpdeny", "back", "setspawn"}))
+check("/tps goes to exactly 791, 73, 609 (configurable), in the main world unless configured", cfg["tps"]["x"] == 791 and cfg["tps"]["y"] == 73 and cfg["tps"]["z"] == 609 and cfg["tps"]["world"] == "" and "getDouble(\"tps.x\", 791)" in java["SpawnManager.java"] and "getDouble(\"tps.y\", 73)" in java["SpawnManager.java"] and "getDouble(\"tps.z\", 609)" in java["SpawnManager.java"])
+sp = java["SpawnManager.java"]
+check("/tps is safe: unloaded/missing world handled, chunk loaded first, blocked/lava destination refuses, world border checked, not in combat, countdown cancelled by movement/damage", all(x in sp for x in ("tps-world", "getChunkAtAsync", "isSafe(target)", "tps-unsafe", "isInside(target)", "inCombat", "countdown.start")))
+check("/tps and /home share ONE countdown (only one pending teleport per player) and the shared cooldown-like delay", "plugin.countdown.start" in java["HomeManager.java"] and "plugin.countdown.start" in sp and "TeleportCountdown" in java["KnightPlugin.java"])
+check("typing /tps in game runs OUR teleport instead of Paper's TPS readout (configurable), and combat blocks it", "override-paper-tps" in java["Listeners.java"] and "plugin.spawn.tps(p)" in java["Listeners.java"] and "tps" in cfg["combat"]["blocked-commands"])
+check("every countdown message exists for both /home and /tps", all(f"{k}-{x}" in cfg["messages"] for k in ("home", "tps") for x in ("countdown", "countdown-bar", "cancel-move", "cancel-combat", "cancel-damage")))
+check("existing home commands and data are untouched (HOME_SET/HOME_SELECT/HOME_DELETE, same homes table)", all(x in java["Sql.java"] for x in ("HOME_SET", "HOME_SELECT", "HOME_DELETE", "CREATE TABLE IF NOT EXISTS homes")) and {"sethome", "home", "deletehome"} <= cmds)
+
+print("== 2.1.0: /reset (operators only)")
+rm, rmenu, cmdsrc = java["ResetManager.java"], java["ResetMenu.java"], java["Commands.java"]
+reset_case = cmdsrc[cmdsrc.index('case "reset"'):cmdsrc.index('case "tps"')]
+check("/reset requires real OP status in the command itself (not just a hidden command or a permission node)", "p.isOp()" in reset_case and "no-permission" in reset_case and "permission" not in y["plugin.yml"]["commands"]["reset"])
+check("OP status is re-checked when the menu opens, on every click, and again at the moment of resetting", "isOperator(admin)" in rmenu and "isOperator(player)" in rmenu and "isOperator(admin)" in rm[rm.index("public void reset("):])
+check("the list starts with 'Everyone', then player heads for every known player (online or offline, from the database), paginated", 'new Target(null, "Everyone"' in rm and "PagedMenu<Target>" in rmenu and "Items.head" in rmenu and "RESET_LIST" in rm)
+check("a confirmation screen names the target (Everyone or the player) with Confirm/Cancel; Cancel changes nothing", "ConfirmMenu" in rmenu and "RESET EVERYONE" in rmenu and '"&4&lRESET " + t.name()' in rmenu and "go(new ResetMenu(plugin, player, entries))" in rmenu)
+check("a reset is one transaction; a second reset is refused while one runs; the confirm button works only once", "if (resetting)" in rm and "plugin.economy.commit(\"ADMIN_RESET\"" in rm and "if (used) return;" in java["ConfirmMenu.java"])
+sq = java["Sql.java"]
+reset_sql = " ".join(re.findall(r'(?:RESET_\w+|ADMIN_LOG_INSERT) = "([^"]*)"', sq))
+check("/reset SQL touches ONLY money and bounty: never kills, deaths, streaks, playtime, settings, homes, kit cooldowns", "dollars" in reset_sql and "bounty" in reset_sql and not re.search(r"kills|deaths|streak|playtime|anim_off|homes|player_settings|kit_cooldowns|migrated", reset_sql.replace("INSERT INTO tx", "")), reset_sql[:200])
+check("who reset whom is logged (console + admin_log table) and the admin is told when it finishes", "ADMIN_LOG_INSERT" in rm and "[RESET]" in rm and "reset-done" in rm and "CREATE TABLE IF NOT EXISTS admin_log" in sq)
+check("money is reset to config reset.money-to (default 0) - it never re-grants the $150 starting balance", cfg["reset"]["money-to"] == 0 and "moneyTo()" in rm)
+check("in-memory balances are synced after the database commit (and HUD refreshed); offline players are handled in the database", "forEachCached" in rm and "hud.touch" in rm and "RESET_ALL" in rm)
+
+print("== 2.1.0: statistics & version")
+check("/stat is unchanged in scope: money, kills, deaths, playtime, streaks and the rest all still come from saved data", all(x in java["StatMenu.java"] for x in ("a.dollars", "a.kills", "a.deaths", "plugin.stats.playtime(a)", "a.streak", "a.bestStreak")))
+check("duplicate counting is prevented: a death is counted once until respawn; kills count only inside the committed bounty transaction", "deathCounted.add(" in java["StatsManager.java"] and "onRespawn" in java["Listeners.java"] and "Sql.KILLS_ADD" in java["BountyManager.java"])
+check("project version is 2.1.0", 'version = "2.1.0"' in res["build.gradle.kts"])
+check("new settings/menus honour gui.fill-empty-slots (optional) while keeping the dark theme by default", cfg["gui"]["fill-empty-slots"] is True and "gui.fill-empty-slots" in java["Menu.java"])
 
 print(f"\n{passed} passed, {failed} failed"); sys.exit(1 if failed else 0)

@@ -163,12 +163,11 @@ categories:
       - {material: TROPICAL_FISH, amount: 4, price: 10}
       - {material: PUFFERFISH, amount: 4, price: 16}
   redstone:
-    name: "Redstone"
+    name: "Redstone: Component"
     icon: REDSTONE
-    description: ["&7Every redstone component."]
+    description: ["&7Every Survival-obtainable redstone component."]
     exclude-sold: true
-    items:
-      - {material: REDSTONE, amount: 16, price: 35}
+    items: []
   stone:
     name: "Blocks: Stone & Bricks"
     icon: STONE_BRICKS
@@ -197,12 +196,6 @@ categories:
     name: "Blocks: Nether & End"
     icon: NETHERRACK
     description: ["&7Nether and End building blocks."]
-    exclude-sold: true
-    items: []
-  utility:
-    name: "Blocks: Utility & Decor"
-    icon: CRAFTING_TABLE
-    description: ["&7Workstations, lights, heads and rare blocks."]
     exclude-sold: true
     items: []
   nature_wood:

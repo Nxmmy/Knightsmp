@@ -11,6 +11,8 @@ import org.bukkit.scheduler.BukkitTask;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -29,6 +31,7 @@ public final class StatsManager {
 
     private final KnightPlugin plugin;
     private BukkitTask flushTask;
+    private final Set<UUID> deathCounted = new HashSet<>();   // players whose current death is already counted (cleared on respawn)
 
     public StatsManager(KnightPlugin plugin) { this.plugin = plugin; }
 
@@ -61,6 +64,7 @@ public final class StatsManager {
         if (a == null) return;
         flush(a);
         a.sessionStart = 0;
+        deathCounted.remove(p.getUniqueId());
     }
     public void shutdown() {
         if (flushTask != null) flushTask.cancel();
@@ -76,11 +80,13 @@ public final class StatsManager {
     // ---------- deaths ----------
     public void onDeath(Player victim) {
         Account a = plugin.economy.get(victim);
-        if (a == null) return;
+        if (a == null || !deathCounted.add(victim.getUniqueId())) return;   // one death is counted once, even if the event repeats
         a.deaths++;
         a.streak = 0;
         plugin.db.update(Sql.DEATH_ADD, a.id.toString());
     }
+
+    public void onRespawn(Player p) { deathCounted.remove(p.getUniqueId()); }
 
     // ---------- /payanim preference ----------
     public void setAnimOff(Account a, boolean off) {

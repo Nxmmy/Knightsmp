@@ -1,15 +1,19 @@
 package dev.knightsmp.mods;
 
+import dev.knightsmp.mods.admin.ResetManager;
 import dev.knightsmp.mods.bounty.BountyManager;
 import dev.knightsmp.mods.combat.CombatManager;
 import dev.knightsmp.mods.commands.Commands;
 import dev.knightsmp.mods.economy.EconomyManager;
 import dev.knightsmp.mods.fx.PaymentFx;
 import dev.knightsmp.mods.home.HomeManager;
+import dev.knightsmp.mods.home.SpawnManager;
+import dev.knightsmp.mods.home.TeleportCountdown;
 import dev.knightsmp.mods.hud.HudManager;
 import dev.knightsmp.mods.kits.KitManager;
 import dev.knightsmp.mods.listeners.Listeners;
 import dev.knightsmp.mods.market.MarketManager;
+import dev.knightsmp.mods.settings.SettingsManager;
 import dev.knightsmp.mods.shop.ShopManager;
 import dev.knightsmp.mods.stats.StatsManager;
 import dev.knightsmp.mods.storage.Database;
@@ -33,9 +37,13 @@ public final class KnightPlugin extends JavaPlugin {
     public KitManager kits;
     public MarketManager market;
     public HomeManager home;
+    public SpawnManager spawn;
+    public TeleportCountdown countdown;
     public HudManager hud;
     public StatsManager stats;
     public PaymentFx fx;
+    public SettingsManager settings;
+    public ResetManager reset;
     private volatile boolean shuttingDown;
 
     @Override
@@ -53,10 +61,14 @@ public final class KnightPlugin extends JavaPlugin {
         }
         economy = new EconomyManager(this);
         combat = new CombatManager(this);
+        countdown = new TeleportCountdown(this);
         home = new HomeManager(this);
+        spawn = new SpawnManager(this);
         hud = new HudManager(this);
         stats = new StatsManager(this);
         fx = new PaymentFx(this);
+        settings = new SettingsManager(this);
+        reset = new ResetManager(this);
         bounty = new BountyManager(this);
         shop = new ShopManager(this);
         kits = new KitManager(this);
@@ -78,7 +90,7 @@ public final class KnightPlugin extends JavaPlugin {
 
         // /reload or late enable: load accounts of players already online
         for (Player p : Bukkit.getOnlinePlayers()) {
-            try { economy.loadBlocking(p.getUniqueId(), p.getName()); bounty.onJoin(p); hud.attach(p); stats.onJoin(p); }
+            try { economy.loadBlocking(p.getUniqueId(), p.getName()); bounty.onJoin(p); hud.attach(p); stats.onJoin(p); settings.applyAll(p); }
             catch (Exception e) { p.kick(Text.c("&cKnightSMP could not load your data. Please rejoin.")); }
         }
         bounty.refreshRole();
@@ -90,7 +102,7 @@ public final class KnightPlugin extends JavaPlugin {
         shuttingDown = true;
         if (combat != null) combat.stop();
         if (fx != null) fx.shutdown();
-        if (home != null) home.shutdown();
+        if (countdown != null) countdown.shutdown();
         if (stats != null) stats.shutdown();     // saves playtime before the database closes
         if (hud != null) hud.shutdown();
         if (bounty != null) bounty.shutdown();

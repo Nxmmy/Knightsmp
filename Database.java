@@ -42,6 +42,8 @@ public final class Database {
             s.execute(Sql.CREATE_TX);
             s.execute(Sql.CREATE_TX_INDEX);
             s.execute(Sql.CREATE_HOMES);
+            s.execute(Sql.CREATE_SETTINGS);
+            s.execute(Sql.CREATE_ADMIN_LOG);
             s.execute(Sql.CREATE_KITS);
             s.execute(Sql.CREATE_MARKET);
             s.execute(Sql.CREATE_META);

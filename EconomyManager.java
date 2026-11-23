@@ -56,6 +56,7 @@ public final class EconomyManager {
     // ---------- account loading ----------
     public Account cached(UUID id) { return cache.get(id); }
     public Account get(Player p) { return cache.get(p.getUniqueId()); }
+    public void forEachCached(Consumer<Account> action) { for (Account a : cache.values()) action.accept(a); }
 
     /** Called from the async pre-login thread (and once at startup for already-online players). */
     public Account loadBlocking(UUID id, String name) throws Exception {
@@ -91,6 +92,9 @@ public final class EconomyManager {
         if (a == null) return null;
         try (PreparedStatement ps = Database.bind(c, Sql.HOME_SELECT, id.toString()); ResultSet rs = ps.executeQuery()) {
             if (rs.next()) a.home = new dev.knightsmp.mods.home.HomeManager.Home(rs.getString(1), rs.getDouble(2), rs.getDouble(3), rs.getDouble(4), (float) rs.getDouble(5), (float) rs.getDouble(6));
+        }
+        try (PreparedStatement ps = Database.bind(c, Sql.SETTING_SELECT, id.toString()); ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) a.settings.put(rs.getString(1), rs.getString(2));
         }
         try (PreparedStatement ps = Database.bind(c, Sql.SELECT_KITS, id.toString()); ResultSet rs = ps.executeQuery()) {
             while (rs.next()) a.kitCooldowns.put(rs.getString(1), rs.getLong(2));

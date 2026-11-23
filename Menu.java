@@ -43,7 +43,8 @@ public abstract class Menu implements InventoryHolder {
         for (int i = 0; i < rows * 9; i++) {
             int r = i / 9, c = i % 9;
             boolean border = r == 0 || r == rows - 1 || c == 0 || c == 8;
-            inv.setItem(i, border ? ((r + c) % 2 == 0 ? dark : purple) : bg);
+            if (border) inv.setItem(i, (r + c) % 2 == 0 ? dark : purple);
+            else if (plugin.getConfig().getBoolean("gui.fill-empty-slots", true)) inv.setItem(i, bg);   // false = leave unused slots empty
         }
     }
 

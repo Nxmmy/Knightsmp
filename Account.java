@@ -12,6 +12,7 @@ public final class Account {
     public String name;
     public long dollars, bounty, kills, deaths, streak, bestStreak, playtime;   // playtime in seconds
     public boolean animOff;
+    public final Map<String, String> settings = new HashMap<>();   // /settings values (key -> value), loaded at login
     public long sessionStart;   // ms; when the current online session was last counted into playtime (not saved)
     public HomeManager.Home home;
     public final Map<String, Long> kitCooldowns = new HashMap<>();

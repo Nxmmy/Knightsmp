@@ -12,13 +12,23 @@ combat:
     broadcast: true
     commands: []            # console commands, %player% placeholder
   # Commands blocked while combat-tagged. Aliases of these commands (from any plugin) are resolved too.
-  blocked-commands: [home]
+  blocked-commands: [home, tps]
 
 home:
   delay-seconds: 5          # stand still this long before /home teleports (knightsmp.bypass.delay skips it)
   cancel-on-move: true
   cancel-on-damage: true
   block-in-combat: true     # /home is refused (and a countdown cancelled) while combat-tagged
+
+tps:                        # /tps = the server's one general teleport: fixed coordinates, same rules as /home
+  world: ""                 # empty = the main world; otherwise a world folder name
+  x: 791
+  y: 73
+  z: 609
+  delay-seconds: 5          # stand still this long (knightsmp.bypass.delay skips it)
+  cancel-on-move: true
+  block-in-combat: true
+  override-paper-tps: true  # players typing /tps get this teleport instead of Paper's TPS readout (console and /mspt still show TPS)
 
 hud:
   enabled: true             # sidebar with Money / Bounty / Kills. Vanilla only shows the sidebar on the RIGHT side of the screen.
@@ -55,6 +65,12 @@ wanted-role:
   announce: true
   on-gain-commands: []      # e.g. ["lp user %player% parent add wanted"]
   on-lose-commands: []
+
+gui:
+  fill-empty-slots: true    # dark-gray background in unused menu slots; false leaves them empty (borders stay)
+
+reset:
+  money-to: 0               # what /reset sets a player's money to (0 = empty; it never gives the $150 starting balance again)
 
 stats:
   playtime-flush-minutes: 5   # playtime is saved on quit/shutdown and also every N minutes
@@ -114,8 +130,27 @@ messages:
   migrate-unset: "&cSet migration.iron-rate and migration.diamond-rate in config.yml first (then /knight reload). Old balances are untouched."
   migrate-none: "&7Nothing to migrate: no accounts with unconverted Iron/Diamond balances."
   migrate-preview: "&7%accounts% accounts hold &f%iron% iron &7and &b%diamonds% diamonds&7 (rates: 1 iron = $%irate%, 1 diamond = $%drate%). Run &f/moneyadmin migrate confirm &7to convert."
+  settings-changed: "&7%setting%: %state%"
+  settings-failed: "&cCould not save that setting - please try again."
   payanim-on: "&aPayment popup turned on."
   payanim-off: "&7Payment popup turned off (you still get the chat message)."
+  # /reset
+  reset-busy: "&cA reset is already running."
+  reset-failed: "&cReset failed - nothing was changed. See the console."
+  reset-done: "&aReset complete: money and bounty of &f%target% &awere reset (%count% accounts)."
+  reset-notice: "&cAn admin reset your money and bounty."
+  # /tps
+  tps-world: "&cThe destination world is not available right now."
+  tps-combat: "&cYou cannot use /tps while in combat!"
+  tps-busy: "&cYou are already teleporting."
+  tps-countdown: "&dTeleporting in &f%seconds%s&d... don't move!"
+  tps-countdown-bar: "&dTeleporting in &f%seconds%s"
+  tps-cancel-move: "&cTeleport cancelled: you moved."
+  tps-cancel-combat: "&cTeleport cancelled: you are in combat."
+  tps-cancel-damage: "&cTeleport cancelled: you took damage."
+  tps-unsafe: "&cThe destination is blocked or unsafe right now. You were not moved - tell an admin."
+  tps-done: "&aTeleported!"
+  tps-failed: "&cTeleport failed."
   # homes
   home-set: "&aHome set."
   home-deleted: "&7Home deleted."

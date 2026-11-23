@@ -8,6 +8,9 @@ description: KnightSMP all-in-one plugin - Dollar economy, shops, kits, market, 
 softdepend: [Geyser-Spigot, floodgate, ViaVersion, ViaBackwards]
 
 commands:
+  reset: {description: Reset money and bounty (operators only), usage: /reset}
+  tps: {description: Teleport to the server's fixed point, usage: /tps, permission: knightsmp.tps}
+  settings: {description: Your personal settings, usage: /settings, permission: knightsmp.settings}
   stat: {description: Show your statistics, usage: "/stat [player]", permission: knightsmp.stat}
   payanim: {description: Turn the payment popup on or off, usage: "/payanim [on/off]", permission: knightsmp.pay}
   sethome: {description: Save your current location as your home, usage: /sethome, permission: knightsmp.home}
@@ -24,6 +27,8 @@ commands:
   knight: {description: KnightSMP admin command, usage: "/knight <reload/setbounty/resetbounty/market>", permission: knightsmp.admin}
 
 permissions:
+  knightsmp.tps: {default: true}
+  knightsmp.settings: {default: true}
   knightsmp.stat: {default: true}
   knightsmp.stat.others: {default: true}
   knightsmp.home: {default: true}

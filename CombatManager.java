@@ -38,7 +38,7 @@ public final class CombatManager {
         tags.put(p.getUniqueId(), System.currentTimeMillis() + duration() * 1000L);
         if (!was) {
             plugin.send(p, "combat-tagged", "%seconds%", duration());
-            plugin.home.cancel(p, "home-cancel-combat");
+            plugin.countdown.cancelFor(p, "combat");
         }
         show(p);
     }

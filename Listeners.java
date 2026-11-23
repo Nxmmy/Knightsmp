@@ -20,6 +20,7 @@ import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
 
 import java.util.HashSet;
 import java.util.Locale;
@@ -45,6 +46,7 @@ public final class Listeners implements Listener {
         plugin.bounty.onJoin(p);
         plugin.hud.attach(p);
         plugin.stats.onJoin(p);
+        plugin.settings.applyAll(p);        // re-applies saved per-player settings (e.g. Mob Spawn) after every login
         plugin.kits.giveStarter(p);
     }
 
@@ -64,7 +66,7 @@ public final class Listeners implements Listener {
             }
         }
         plugin.combat.untag(p);
-        plugin.home.onQuit(p);
+        plugin.countdown.cancelFor(p, null);
         plugin.fx.onQuit(p);
         plugin.stats.onQuit(p);
         plugin.hud.detach(p);
@@ -88,9 +90,9 @@ public final class Listeners implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onDamage(EntityDamageEvent e) {
-        if (e.getEntity() instanceof Player p && e.getFinalDamage() > 0 && plugin.home.isPending(p)
-                && plugin.getConfig().getBoolean("home.cancel-on-damage", true))
-            plugin.home.cancel(p, "home-cancel-damage");
+        if (e.getEntity() instanceof Player p && e.getFinalDamage() > 0 && plugin.countdown.isPending(p)
+                && (plugin.getConfig().getBoolean("home.cancel-on-damage", true)))
+            plugin.countdown.cancelFor(p, "damage");
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -101,9 +103,17 @@ public final class Listeners implements Listener {
         plugin.combat.untag(victim);
     }
 
+    @EventHandler
+    public void onRespawn(PlayerRespawnEvent e) { plugin.stats.onRespawn(e.getPlayer()); }
+
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onCommand(PlayerCommandPreprocessEvent e) {
         Player p = e.getPlayer();
+        if (plugin.getConfig().getBoolean("tps.override-paper-tps", true) && e.getMessage().trim().toLowerCase(Locale.ROOT).matches("^/tps(\\s.*)?$")) {
+            e.setCancelled(true);                      // Paper's own /tps (server TPS) is replaced for players; the console keeps it
+            plugin.spawn.tps(p);
+            return;
+        }
         if (!plugin.combat.inCombat(p)) return;
         String msg = e.getMessage().substring(1).trim();
         if (msg.isEmpty()) return;

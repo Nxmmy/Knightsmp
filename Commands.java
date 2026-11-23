@@ -48,6 +48,13 @@ public final class Commands implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] a) {
         switch (cmd.getName().toLowerCase(Locale.ROOT)) {
+            case "reset" -> {
+                // strictly operators: the real OP status is checked every time the command runs
+                if (!(sender instanceof Player p) || !p.isOp()) { plugin.send(sender, "no-permission"); return true; }
+                dev.knightsmp.mods.gui.ResetMenu.show(plugin, p);
+            }
+            case "tps" -> { Player p = player(sender); if (p != null) plugin.spawn.tps(p); }
+            case "settings" -> { Player p = player(sender); if (p != null) new dev.knightsmp.mods.gui.SettingsMenu(plugin, p).open(); }
             case "stat" -> stat(sender, a);
             case "payanim" -> payAnim(sender, a);
             case "sethome" -> { Player p = player(sender); if (p != null) plugin.home.setHome(p); }

@@ -86,15 +86,15 @@ for nm, price in (("NETHERITE_BLOCK", 12000), ("DIAMOND_BLOCK", 135), ("EMERALD_
     rule(r"^" + nm + r"$", "metal", price, 1)
 rule(r"^" + CO + r"(COPPER_BLOCK|COPPER|CUT_COPPER|CUT_COPPER_STAIRS|CUT_COPPER_SLAB|CHISELED_COPPER|COPPER_GRATE)$", "metal", 8, 4)
 rule(r"^" + CO + r"COPPER_(DOOR|TRAPDOOR)$", "metal", 10, 2)
-rule(r"^" + CO + r"COPPER_(CHEST|GOLEM_STATUE|LANTERN|TORCH|CHAIN|BARS)$", "utility", 10, 2)
+
 rule(r"^(AMETHYST_BLOCK|SMALL_AMETHYST_BUD|MEDIUM_AMETHYST_BUD|LARGE_AMETHYST_BUD|AMETHYST_CLUSTER)$", "nature_terrain", 12, 4)
 # ---- special rare blocks
-rule(r"^DRAGON_EGG$", "utility", 4000, 1); rule(r"^BEACON$", "utility", 2500, 1); rule(r"^CONDUIT$", "utility", 900, 1)
-rule(r"^HEAVY_CORE$", "utility", 1500, 1); rule(r"^WITHER_SKELETON_SKULL$", "utility", 350, 1); rule(r"^DRAGON_HEAD$", "utility", 900, 1)
-rule(r"^(CREEPER_HEAD|ZOMBIE_HEAD|PLAYER_HEAD|PIGLIN_HEAD|SKELETON_SKULL)$", "utility", 120, 1)
-rule(r"^ENCHANTING_TABLE$", "utility", 160, 1); rule(r"^ENDER_CHEST$", "utility", 90, 1); rule(r"^LODESTONE$", "utility", 260, 1)
-rule(r"^RESPAWN_ANCHOR$", "utility", 220, 1); rule(r"^(ANVIL)$", "utility", 90, 1); rule(r"^CHIPPED_ANVIL$", "utility", 60, 1); rule(r"^DAMAGED_ANVIL$", "utility", 40, 1)
-rule(r"^(.*)_FROGLIGHT$", "utility", 40, 1); rule(r"^SEA_LANTERN$", "utility", 14, 2)
+
+
+
+
+
+
 # ---- wood logs / nature wood
 rule(r"^STRIPPED_(" + WO + r")_(LOG|WOOD)$", "nature_wood", 0.7, 16)
 rule(r"^(" + WO + r")_(LOG|WOOD)$", "nature_wood", 0.6, 16)
@@ -141,7 +141,7 @@ rule(r"^(DEAD_)?(TUBE|BRAIN|BUBBLE|FIRE|HORN)_CORAL(_BLOCK|_FAN)?$", "nature_ter
 rule(r"^(SCULK|SCULK_VEIN)$", "nature_terrain", 6, 4); rule(r"^SCULK_CATALYST$", "nature_terrain", 60, 1); rule(r"^SCULK_SHRIEKER$", "nature_terrain", 90, 1)
 rule(r"^TURTLE_EGG$", "nature_terrain", 40, 1); rule(r"^SNIFFER_EGG$", "nature_terrain", 300, 1)
 rule(r"^(DARK_)?PRISMARINE(_BRICKS)?(_STAIRS|_SLAB|_WALL)?$", "nature_terrain", 8, 4)
-rule(r"^(BEE_NEST)$", "utility", 70, 1); rule(r"^(BEEHIVE)$", "utility", 18, 1); rule(r"^HONEYCOMB_BLOCK$", "utility", 8, 2)
+
 # ---- colored blocks
 rule(r"^" + CP + r"_WOOL$", "colored", 1.2, 16); rule(r"^" + CP + r"_CARPET$", "colored", 0.4, 16)
 rule(r"^" + CP + r"_CONCRETE$", "colored", 0.6, 32); rule(r"^" + CP + r"_CONCRETE_POWDER$", "colored", 0.5, 32)
@@ -167,17 +167,7 @@ rule(r"^POLISHED_(ANDESITE|DIORITE|GRANITE|TUFF|DEEPSLATE)(_STAIRS|_SLAB|_WALL)?
 rule(r"^(BRICKS|BRICK_STAIRS|BRICK_SLAB|BRICK_WALL)$", "stone", 0.6, 16)
 rule(r"^(MOSSY_|CRACKED_|CHISELED_)?(STONE_BRICK|DEEPSLATE_BRICK|DEEPSLATE_TILE|TUFF_BRICK|MUD_BRICK)S?(_STAIRS|_SLAB|_WALL)?$|^CHISELED_(DEEPSLATE|TUFF|STONE_BRICKS)$|^CRACKED_DEEPSLATE_(BRICKS|TILES)$", "stone", 0.5, 32)
 rule(r"^(CUT_|CHISELED_|SMOOTH_)?(RED_)?SANDSTONE(_STAIRS|_SLAB|_WALL)?$", "stone", 0.5, 32)
-# ---- utility & decoration
-for nm, price, amt in (("CRAFTING_TABLE", 2, 1), ("CHEST", 4, 2), ("BARREL", 3, 2), ("BOOKSHELF", 12, 1), ("CHISELED_BOOKSHELF", 14, 1), ("LECTERN", 10, 1),
-                       ("COMPOSTER", 3, 1), ("LOOM", 6, 1), ("CARTOGRAPHY_TABLE", 6, 1), ("FLETCHING_TABLE", 6, 1), ("SMITHING_TABLE", 12, 1),
-                       ("GRINDSTONE", 10, 1), ("STONECUTTER", 12, 1), ("FURNACE", 2, 1), ("BLAST_FURNACE", 25, 1), ("SMOKER", 8, 1),
-                       ("CAMPFIRE", 4, 1), ("SOUL_CAMPFIRE", 5, 1), ("CAULDRON", 25, 1), ("BREWING_STAND", 12, 1), ("BELL", 25, 1),
-                       ("JUKEBOX", 25, 1), ("LANTERN", 8, 2), ("SOUL_LANTERN", 9, 2), ("END_ROD", 6, 2), ("FLOWER_POT", 2, 2),
-                       ("DECORATED_POT", 8, 1), ("JACK_O_LANTERN", 4, 2), ("CARVED_PUMPKIN", 3, 2), ("IRON_BARS", 3, 8), ("SCAFFOLDING", 1.5, 8)):
-    rule(r"^" + nm + r"$", "utility", price, amt)
-rule(r"^LADDER$", "utility", 0.3, 16); rule(r"^TORCH$", "utility", 0.3, 16); rule(r"^SOUL_TORCH$", "utility", 0.5, 16)
-rule(r"^(IRON_)?CHAIN$", "utility", 4, 4); rule(r"^IRON_(DOOR|TRAPDOOR)$", "utility", 12, 1)
-FALLBACK = ("utility", 1.5, 8)
+FALLBACK = ("", 0, 1)   # blocks matching no rule are simply not sold (the Utility & Decor category was removed)
 
 def apply_rules(name):
     for rx, cat, unit, amt, item in R:
@@ -230,13 +220,12 @@ cats = {  # id -> (name, icon, description)
     "combat": ("Combat", "DIAMOND_SWORD", ["&7Armor sets, weapons and free armor trims."]),
     "tools": ("Tools", "IRON_PICKAXE", ["&7Tools and utility items."]),
     "food": ("Food", "COOKED_BEEF", ["&7Keep your hunger bar full."]),
-    "redstone": ("Redstone", "REDSTONE", ["&7Every redstone component."]),
+    "redstone": ("Redstone: Component", "REDSTONE", ["&7Every Survival-obtainable redstone component."]),
     "stone": ("Blocks: Stone & Bricks", "STONE_BRICKS", ["&7Stone, bricks, deepslate, sandstone."]),
     "woodblocks": ("Blocks: Wood", "OAK_PLANKS", ["&7Planks, stairs, slabs, doors, fences, signs."]),
     "colored": ("Blocks: Colored & Glass", "CYAN_CONCRETE", ["&7Wool, concrete, terracotta, glass, banners, beds."]),
     "metal": ("Blocks: Metal & Gems", "IRON_BLOCK", ["&7Metal, copper and gem blocks."]),
     "nether_end": ("Blocks: Nether & End", "NETHERRACK", ["&7Nether and End building blocks."]),
-    "utility": ("Blocks: Utility & Decor", "CRAFTING_TABLE", ["&7Workstations, lights, heads and rare blocks."]),
     "nature_wood": ("Nature: Logs & Wood", "OAK_LOG", ["&7Every log, wood, stem and root."]),
     "nature_leaves": ("Nature: Leaves & Saplings", "OAK_SAPLING", ["&7Leaves, saplings and azaleas."]),
     "nature_plants": ("Nature: Flowers & Plants", "POPPY", ["&7Flowers, grass, vines, moss and more."]),
@@ -246,9 +235,9 @@ cats = {  # id -> (name, icon, description)
     "potions": ("Potions", "POTION", ["&7Potions, splash and lingering variants."]),
     "misc": ("Miscellaneous", "ENDER_CHEST", ["&7Mob drops, materials and rare items."]),
 }
-order = ["ores", "combat", "tools", "food", "redstone", "stone", "woodblocks", "colored", "metal", "nether_end", "utility",
+order = ["ores", "combat", "tools", "food", "redstone", "stone", "woodblocks", "colored", "metal", "nether_end",
          "nature_wood", "nature_leaves", "nature_plants", "nature_crops", "nature_terrain", "enchantments", "potions", "misc"]
-DEDUPE = {"redstone", "stone", "woodblocks", "colored", "metal", "nether_end", "utility"}   # items already in /sell are not repeated here
+DEDUPE = {"redstone", "stone", "woodblocks", "colored", "metal", "nether_end"}   # items already in /sell are not repeated here
 def fmt_item(m, a, p, opt=False):
     parts = [f"material: {m}"] + ([f"amount: {a}"] if a > 1 else []) + [f"price: {p}"] + (["optional: true"] if opt or m in OPTIONAL else [])
     return "      - {" + ", ".join(parts) + "}"
@@ -273,7 +262,7 @@ for cid in order:
             shop += f"      - {{set: [{pieces}], name: \"{nm}\", icon: {tier}_CHESTPLATE, price: {price}" + (", optional: true" if opt else "") + "}\n"
         for m, a, p in COMBAT: shop += fmt_item(m, a, p) + "\n"
     elif cid == "redstone":
-        shop += "    items:\n      - {material: REDSTONE, amount: 16, price: 35}\n"
+        shop += "    items: []\n"
     elif rows is not None:
         shop += "    items:\n" + "\n".join(fmt_item(m, a, p) for m, a, p in rows) + "\n"
     else:
@@ -282,10 +271,10 @@ open(os.path.join(OUT, "shop.yml"), "w").write(shop)
 
 blocks = ("# Shop pricing rules. EVERY item the running server knows that is a block (and anything matched by a rule with item: true) is listed in the shop\n"
           "# automatically: the first matching rule gives its category, price per item (unit) and pack size (amount). Pack price = round(unit x amount), minimum $1 (unit 0 = free).\n"
-          "# Items matching no rule fall back to the 'fallback' price (they are named in the console at startup so you can add a rule). Anything in shop.yml is skipped here.\n"
+          "# Blocks matching no rule are not sold (fallback category is empty); set a category there to list them at the fallback price. Anything in shop.yml is skipped here.\n"
           "# Add or tune rules freely; regexes are matched against the full UPPER_CASE material name.\n")
 blocks += "exclude:\n" + "".join(f"  - '{x}'\n" for x in EXCLUDE)
-blocks += f"fallback: {{category: {FALLBACK[0]}, unit: {FALLBACK[1]}, amount: {FALLBACK[2]}}}\nrules:\n"
+blocks += f"fallback: {{category: \"{FALLBACK[0]}\", unit: {FALLBACK[1]}, amount: {FALLBACK[2]}}}   # empty category = not sold\nrules:\n"
 for rx, cat, unit, amt, item in R:
     blocks += f"  - {{match: '{rx}', category: {cat}, unit: {unit}, amount: {amt}" + (", item: true" if item else "") + "}\n"
 open(os.path.join(OUT, "blocks.yml"), "w").write(blocks)

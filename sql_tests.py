@@ -17,7 +17,7 @@ def check(name, cond, detail=""):
 def new_db(path=None):
     path = path or tempfile.mktemp(suffix=".db")
     c = sqlite3.connect(path, isolation_level=None)
-    for k in ("CREATE_ACCOUNTS","CREATE_TX","CREATE_TX_INDEX","CREATE_HOMES","CREATE_KITS","CREATE_MARKET","CREATE_META"): c.execute(SQL[k])
+    for k in ("CREATE_ACCOUNTS","CREATE_TX","CREATE_TX_INDEX","CREATE_SETTINGS","CREATE_ADMIN_LOG","CREATE_HOMES","CREATE_KITS","CREATE_MARKET","CREATE_META"): c.execute(SQL[k])
     return c, path
 def add(c, name, dollars=0, bounty=0):
     u = str(uuid.uuid4()); c.execute(SQL["INSERT_ACCOUNT"], (u, name, dollars))
@@ -189,6 +189,51 @@ check("totals come from the saved transaction history (earned selling, spent, pa
 check("richest rank is computed from real balances (rich $900 is #1, stats is behind)", c.execute(SQL["RANK_MONEY"], (r2,)).fetchone()[0] == 1 and c.execute(SQL["RANK_MONEY"], (st,)).fetchone()[0] == 2)
 check("kills rank is computed from real kills", c.execute(SQL["RANK_KILLS"], (st,)).fetchone()[0] == 1 and c.execute(SQL["RANK_KILLS"], (r2,)).fetchone()[0] == 2)
 check("an old-database account upgraded for 2.0 has all statistics at 0", oc.execute("SELECT deaths,streak,best_streak,playtime,anim_off FROM accounts WHERE uuid=?", (o1,)).fetchone() == (0, 0, 0, 0, 0))
+
+print("== /settings persistence and isolation")
+c, path = new_db(); pa = add(c, "playerA", 150); pb = add(c, "playerB", 150)
+def sets(cn, u): return dict(cn.execute(SQL["SETTING_SELECT"], (u,)).fetchall())
+check("a new player has no stored settings (defaults apply)", sets(c, pa) == {})
+c.execute(SQL["SETTING_SET"], (pa, "mob-spawn", "closed"))
+check("player A closes Mob Spawn: it is saved for A only", sets(c, pa) == {"mob-spawn": "closed"} and sets(c, pb) == {})
+c.execute(SQL["SETTING_SET"], (pa, "mob-spawn", "open")); c.execute(SQL["SETTING_SET"], (pa, "mob-spawn", "closed"))
+check("changing a setting repeatedly keeps exactly one row per setting (no duplicates)", c.execute("SELECT COUNT(*) FROM player_settings WHERE uuid=?", (pa,)).fetchone()[0] == 1)
+c.execute(SQL["SETTING_SET"], (pa, "future-setting", "open"))
+check("new settings need no schema change (key/value rows)", sets(c, pa) == {"mob-spawn": "closed", "future-setting": "open"})
+c.execute(SQL["SETTING_SET"], (pb, "mob-spawn", "open"))
+check("A and B stay independent", sets(c, pa)["mob-spawn"] == "closed" and sets(c, pb)["mob-spawn"] == "open")
+c.close(); c = sqlite3.connect(path, isolation_level=None)
+check("settings survive a restart", sets(c, pa)["mob-spawn"] == "closed" and sets(c, pb)["mob-spawn"] == "open")
+
+print("== /reset: money and bounty only")
+c, path = new_db(); TO = 0
+ra, rb, rc = add(c, "alice", 500, bounty=300), add(c, "bob", 80, bounty=50), add(c, "carol", 0, bounty=0)
+for u in (ra, rb, rc):
+    c.execute(SQL["KILLS_ADD"], (u,)); c.execute(SQL["DEATH_ADD"], (u,)); c.execute(SQL["PLAYTIME_ADD"], (999, u))
+    c.execute(SQL["SETTING_SET"], (u, "mob-spawn", "closed")); c.execute(SQL["HOME_SET"], (u, "world", 1.0, 2.0, 3.0, 0.0, 0.0)); c.execute(SQL["KIT_STAMP"], (u, "beginner", 1))
+def snapshot(u): return (c.execute("SELECT kills,deaths,streak,best_streak,playtime,anim_off FROM accounts WHERE uuid=?", (u,)).fetchone(), sets(c, u), c.execute(SQL["HOME_SELECT"], (u,)).fetchone(), c.execute("SELECT kit FROM kit_cooldowns WHERE uuid=?", (u,)).fetchall())
+before = {u: snapshot(u) for u in (ra, rb, rc)}
+def do_reset(cn, target=None, to=TO, admin=("admin-uuid", "Admin")):
+    cn.execute("BEGIN")
+    if target is None:
+        cn.execute(SQL["RESET_TX_ALL"], (1, to, to)); n = cn.execute(SQL["RESET_ALL"], (to,)).rowcount
+    else:
+        cn.execute(SQL["RESET_TX_ONE"], (1, to, target, to)); n = cn.execute(SQL["RESET_ONE"], (to, target)).rowcount
+        if n != 1: cn.execute("ROLLBACK"); return n
+    cn.execute(SQL["ADMIN_LOG_INSERT"], (1, admin[0], admin[1], "RESET_MONEY_BOUNTY", "EVERYONE" if target is None else target, "money->%d" % to))
+    cn.execute("COMMIT"); return n
+check("reset ONE player (alice): only alice's money and bounty change", do_reset(c, ra) == 1 and bal(c, ra) == 0 and bnty(c, ra) == 0 and bal(c, rb) == 80 and bnty(c, rb) == 50)
+check("...and nobody else's money/bounty was touched (bob keeps $80 / bounty 50)", bal(c, rb) == 80 and bnty(c, rb) == 50)
+check("kills, deaths, streaks, playtime, settings, homes and kit cooldowns are unchanged for the reset player AND everyone else", all(snapshot(u) == before[u] for u in (ra, rb, rc)))
+check("a history row records the money that was removed (-500) for alice only", c.execute("SELECT delta,type FROM tx WHERE uuid=? AND type='ADMIN_RESET'", (ra,)).fetchall() == [(-500, "ADMIN_RESET")] and c.execute("SELECT COUNT(*) FROM tx WHERE uuid=? AND type='ADMIN_RESET'", (rb,)).fetchone()[0] == 0)
+check("resetting an unknown/offline-never-seen account changes nothing and reports 0 rows", do_reset(c, str(uuid.uuid4())) == 0 and bal(c, rb) == 80)
+check("reset EVERYONE: all balances and bounties go to 0 (offline players included - they are just database rows)", do_reset(c) == 3 and all(bal(c, u) == 0 and bnty(c, u) == 0 for u in (ra, rb, rc)))
+check("...history rows only for accounts that actually lost money (bob yes, alice/carol already 0 -> none new)", c.execute("SELECT COUNT(*) FROM tx WHERE type='ADMIN_RESET'", ()).fetchone()[0] == 2)
+check("EVERY other column is still untouched after the global reset", all(snapshot(u) == before[u] for u in (ra, rb, rc)))
+check("the audit log names the admin and the target for both resets", c.execute("SELECT admin_name,action,target FROM admin_log ORDER BY id").fetchall() == [("Admin", "RESET_MONEY_BOUNTY", ra), ("Admin", "RESET_MONEY_BOUNTY", "EVERYONE")])
+check("running the global reset twice is harmless (idempotent) and never creates a negative balance", do_reset(c) == 3 and all(bal(c, u) == 0 for u in (ra, rb, rc)))
+check("reset can set a chosen amount instead of 0 (config reset.money-to) and records the right delta", (move(c, ra, 40, "TEST") and do_reset(c, ra, to=10) == 1 and bal(c, ra) == 10 and c.execute("SELECT delta FROM tx WHERE uuid=? AND type='ADMIN_RESET' ORDER BY id DESC LIMIT 1", (ra,)).fetchone()[0] == -30))
+check("the reset player list orders names case-insensitively and includes everyone known", [r[1] for r in c.execute(SQL["RESET_LIST"], (100,))] == ["alice", "bob", "carol"])
 
 print("== homes persist")
 c, path = new_db(); hu = add(c, "homer", 150)
